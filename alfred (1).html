@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALFRED // SIP N' SNACK ERP</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+[data-theme="dark"]{--bg:#07100a;--bg1:#0c160e;--bg2:#121e14;--bg3:#1a2b1d;--bdr:#1e3022;--bdr2:#2a4430;--acc:#00e87a;--acc2:#00b35e;--acc3:#005e35;--accdim:rgba(0,232,122,.08);--am:#f0a500;--amdim:rgba(240,165,0,.1);--rd:#f03c3c;--rddim:rgba(240,60,60,.1);--bl:#3ab4f5;--bldim:rgba(58,180,245,.1);--tx:#e8f5ec;--tx2:#7aaa88;--tx3:#3d5c45;--shadow:rgba(0,0,0,.5);--hole:#0c160e}
+[data-theme="light"]{--bg:#f4f7f4;--bg1:#fff;--bg2:#eef3ef;--bg3:#e0ebe1;--bdr:#cddacf;--bdr2:#b4c9b7;--acc:#006d35;--acc2:#008a42;--acc3:#004d24;--accdim:rgba(0,109,53,.07);--am:#b87000;--amdim:rgba(184,112,0,.08);--rd:#cc2222;--rddim:rgba(204,34,34,.07);--bl:#0066aa;--bldim:rgba(0,102,170,.07);--tx:#0d1f10;--tx2:#325c38;--tx3:#7a9e7e;--shadow:rgba(0,0,0,.08);--hole:#fff}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:13px;line-height:1.5;overflow:hidden}
+::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--bg3)}
+[data-theme="dark"] body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,.013) 3px,rgba(0,0,0,.013) 4px);pointer-events:none;z-index:9999}
+.mono{font-family:'IBM Plex Mono',monospace}
+
+.shell{display:grid;grid-template-rows:44px 1fr;height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--bdr);background:var(--bg1)}
+.logo{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;color:var(--acc);letter-spacing:.2em}
+[data-theme="dark"] .logo{text-shadow:0 0 16px rgba(0,232,122,.3)}
+.logo sup{font-size:8px;color:var(--tx3);font-weight:400;vertical-align:super;margin-left:6px;letter-spacing:.03em;font-family:'IBM Plex Sans',sans-serif}
+.tbr{display:flex;align-items:center;gap:10px}
+.clock{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--tx2);letter-spacing:.06em}
+.tbtn{padding:3px 9px;background:var(--bg2);border:1px solid var(--bdr);border-radius:2px;cursor:pointer;font-size:8px;letter-spacing:.1em;color:var(--tx2);font-weight:600;font-family:'IBM Plex Mono',monospace;text-transform:uppercase}
+.live{display:flex;align-items:center;gap:4px;font-size:9px;color:var(--acc2);letter-spacing:.1em;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--acc);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.wrap{display:grid;grid-template-rows:auto 1fr;overflow:hidden;height:100%}
+.ticker{overflow:hidden;white-space:nowrap;border-bottom:1px solid var(--bdr);background:var(--bg1);padding:4px 0}
+.ticker-inner{display:inline-block;animation:tick 65s linear infinite;font-family:'IBM Plex Mono',monospace;font-size:9px}
+.ti{display:inline-block;padding:0 18px}
+.ts{color:var(--acc);font-weight:600}.tv{color:var(--tx2)}.tup{color:var(--acc);margin-left:3px}.tdn{color:var(--rd);margin-left:3px}
+@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+.body{display:grid;grid-template-columns:182px 1fr;overflow:hidden}
+.sb{background:var(--bg1);border-right:1px solid var(--bdr);display:flex;flex-direction:column;padding:14px 0;overflow-y:auto}
+.sb-sec{margin-bottom:16px}
+.sbl{font-size:8px;letter-spacing:.22em;color:var(--tx3);padding:0 13px 6px;text-transform:uppercase;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.sbi{display:flex;align-items:center;justify-content:space-between;padding:6px 13px;cursor:pointer;color:var(--tx2);font-size:11px;border-left:2px solid transparent;transition:all .1s}
+.sbi:hover{background:var(--bg2);color:var(--tx)}
+.sbi.on{color:var(--acc);border-left-color:var(--acc);background:var(--accdim)}
+.sbadge{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 5px;background:var(--bg2);border:1px solid var(--bdr);color:var(--tx3);border-radius:2px;font-weight:500}
+.sbi.on .sbadge{background:var(--accdim);color:var(--acc2);border-color:var(--acc3)}
+.sbstat{margin:3px 10px;padding:9px 11px;background:var(--bg2);border:1px solid var(--bdr);border-radius:2px}
+.sbv{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--acc)}
+.sbl2{font-size:8px;color:var(--tx3);letter-spacing:.1em;text-transform:uppercase;margin-top:2px;font-weight:600}
+
+.main{overflow-y:auto;overflow-x:hidden}
+.pg{display:none;padding:18px 22px;min-height:100%}
+.pg.on{display:block}
+
+/* SHARED LAYOUT */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:16px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:6px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.g2a{display:grid;grid-template-columns:1.4fr 1fr;gap:8px;margin-bottom:14px}
+
+.sh{display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:18px}
+.sh:first-child{margin-top:0}
+.sl{flex:1;height:1px;background:var(--bdr)}
+.st{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx3);white-space:nowrap;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.sn{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:1px 6px;background:var(--bg2);border:1px solid var(--bdr);color:var(--tx3);border-radius:2px;font-weight:500}
+
+/* KPI */
+.kpi{background:var(--bg1);border:1px solid var(--bdr);border-radius:2px;padding:12px 14px}
+.kv{font-family:'IBM Plex Mono',monospace;font-size:21px;font-weight:600;color:var(--acc);margin-bottom:3px}
+.kl{font-size:8px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase;font-weight:600;font-family:'IBM Plex Mono',monospace}
+.ks{font-size:9px;color:var(--tx3);margin-top:2px}
+.kpi.am .kv{color:var(--am)}.kpi.rd .kv{color:var(--rd)}.kpi.bl .kv{color:var(--bl)}
+
+/* BOX */
+.box{background:var(--bg1);border:1px solid var(--bdr);border-radius:2px;padding:14px}
+.btitle{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx3);margin-bottom:12px;font-weight:600}
+
+/* MINI BAR */
+.mb-row{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.mb-l{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2);width:82px;flex-shrink:0;text-align:right;font-weight:500}
+.mb-t{flex:1;height:5px;background:var(--bg3);border-radius:1px;overflow:hidden}
+.mb-f{height:100%;border-radius:1px}
+.mb-n{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx2);width:32px;flex-shrink:0;text-align:right;font-weight:600}
+
+/* FLOW */
+.flow{display:flex;margin-bottom:16px}
+.fs{flex:1;text-align:center;padding:10px 5px;background:var(--bg2);border:1px solid var(--bdr)}
+.fs:not(:last-child){border-right:none}
+.fn{font-family:'IBM Plex Mono',monospace;font-size:17px;font-weight:600;color:var(--acc)}
+.fl{font-size:8px;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-top:2px;font-weight:600}
+
+/* WHALE */
+.whale{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;background:var(--bg2);border:1px solid var(--bdr);border-radius:2px;border-left:2px solid var(--am);margin-bottom:4px}
+.wn{font-size:11px;font-weight:600;color:var(--tx)}.wm{font-size:9px;color:var(--tx3);margin-top:1px}
+.wv{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--am)}
+
+/* ALERT */
+.aler{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;background:var(--bg2);border:1px solid var(--bdr);border-radius:2px;margin-bottom:4px}
+.aler.ar{border-left:2px solid var(--rd)}.aler.aa{border-left:2px solid var(--am)}.aler.ag{border-left:2px solid var(--acc)}
+.ai{font-size:11px;flex-shrink:0}.ah{font-size:10px;font-weight:600;color:var(--tx);line-height:1.3}
+.as{font-size:9px;color:var(--tx3);margin-top:1px}
+
+/* CRM CARDS */
+.card{background:var(--bg1);border:1px solid var(--bdr);border-radius:2px;padding:10px 11px;cursor:pointer;position:relative;overflow:hidden;transition:border-color .1s,background .1s}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:transparent;transition:background .1s}
+.card:hover{border-color:var(--bdr2);background:var(--bg2)}.card:hover::before{background:var(--acc3)}
+.card.curg{border-left:2px solid var(--rd)}.card.curg::before{background:var(--rd)}
+.card.chot{border-left:2px solid var(--am)}.card.chot::before{background:var(--am)}
+.card.cwon{border-left:2px solid var(--acc)}.card.cwon::before{background:var(--acc)}
+.ct{display:flex;justify-content:space-between;align-items:flex-start;gap:4px;margin-bottom:3px}
+.cn{font-size:12px;font-weight:600;color:var(--tx);line-height:1.2}
+.cd{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx3);white-space:nowrap;font-weight:500;flex-shrink:0}
+.cv{font-size:10px;color:var(--tx2);margin-bottom:2px}
+.cs_{font-size:9px;color:var(--tx3);margin-bottom:2px}
+.cval{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--acc);margin:2px 0}
+.cnote{font-size:9px;padding:3px 7px;background:var(--amdim);border-left:2px solid var(--am);color:var(--am);margin:4px 0;line-height:1.4}
+.ccon{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx3);margin-bottom:2px}
+.tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;padding:2px 6px;border-radius:2px;letter-spacing:.08em;text-transform:uppercase}
+.tg{background:var(--accdim);color:var(--acc2);border:1px solid rgba(0,180,90,.18)}
+.ta{background:var(--amdim);color:var(--am);border:1px solid rgba(200,140,0,.18)}
+.tr{background:var(--rddim);color:var(--rd);border:1px solid rgba(204,34,34,.18)}
+.tb{background:var(--bldim);color:var(--bl);border:1px solid rgba(0,100,170,.18)}
+.tx_{background:var(--bg2);color:var(--tx3);border:1px solid var(--bdr)}
+
+/* FILTERS */
+.fbar{display:flex;gap:3px;flex-wrap:wrap;margin-bottom:10px}
+.fb{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:3px 9px;border-radius:2px;border:1px solid var(--bdr);background:transparent;color:var(--tx3);cursor:pointer;letter-spacing:.1em;text-transform:uppercase;font-weight:600;transition:all .1s}
+.fb:hover{border-color:var(--bdr2);color:var(--tx2)}
+.fb.on{background:var(--accdim);border-color:var(--acc3);color:var(--acc)}
+
+/* YEAR TOGGLE */
+.ytog{display:flex;border:1px solid var(--bdr);border-radius:2px;overflow:hidden;width:fit-content;margin-bottom:14px}
+.yb{font-family:'IBM Plex Mono',monospace;font-size:9px;padding:4px 14px;background:transparent;color:var(--tx3);cursor:pointer;letter-spacing:.1em;font-weight:600;border:none;transition:all .1s}
+.yb.on{background:var(--accdim);color:var(--acc)}
+
+/* SEARCH */
+.srch{position:relative;margin-bottom:10px}
+.srch input{width:100%;background:var(--bg2);border:1px solid var(--bdr);border-radius:2px;padding:7px 11px 7px 26px;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:11px;outline:none}
+.srch input:focus{border-color:var(--acc3)}
+.srch input::placeholder{color:var(--tx3)}
+.srch::before{content:'⌕';position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:12px}
+
+.sec-acts{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.add-btn{display:flex;align-items:center;gap:4px;padding:4px 10px;background:var(--accdim);border:1px solid var(--acc3);border-radius:2px;color:var(--acc);font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.1em;cursor:pointer;font-weight:600}
+
+/* ICP CARDS */
+.icp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.icp{background:var(--bg1);border:1px solid var(--bdr);border-radius:2px;padding:12px;border-top:2px solid var(--acc)}
+.icp.iam{border-top-color:var(--am)}.icp.ibl{border-top-color:var(--bl)}
+.ict{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--acc);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.icp.iam .ict{color:var(--am)}.icp.ibl .ict{color:var(--bl)}
+.ir{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--bdr)}
+.ir:last-child{border-bottom:none}
+.ik{font-size:9px;color:var(--tx3)}.iv{font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:600;color:var(--tx)}
+
+/* INSIGHT */
+.ins{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;background:var(--bg2);border:1px solid var(--bdr);border-radius:2px;margin-bottom:6px}
+.ins.ig{border-left:2px solid var(--acc)}.ins.ia{border-left:2px solid var(--am)}.ins.ir_{border-left:2px solid var(--rd)}
+.insico{font-size:12px;flex-shrink:0;margin-top:1px}
+.insh{font-size:10px;font-weight:600;color:var(--tx);line-height:1.3;margin-bottom:2px}
+.insb{font-size:9px;color:var(--tx3);line-height:1.5}
+
+/* EVENTS / CAL CARDS */
+.ecal{background:var(--bg1);border:1px solid var(--bdr);border-radius:2px;padding:10px 11px;border-left:2px solid var(--acc)}
+.ecal.ec-am{border-left-color:var(--am)}.ecal.ec-bl{border-left-color:var(--bl)}.ecal.ec-no{border-left-color:var(--tx3)}
+.ec-dt{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--acc);font-weight:600;margin-bottom:2px}
+.ecal.ec-am .ec-dt{color:var(--am)}.ecal.ec-bl .ec-dt{color:var(--bl)}.ecal.ec-no .ec-dt{color:var(--tx3)}
+.ec-n{font-size:12px;font-weight:600;color:var(--tx);margin-bottom:2px}
+.ec-v{font-size:10px;color:var(--tx2)}
+.ec-val{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--am);margin-top:3px}
+.ec-src{font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--tx3);margin-top:2px}
+
+/* DEPOSIT TRACKER */
+.dep-row{display:grid;grid-template-columns:1.8fr .8fr .8fr .8fr .7fr;gap:8px;align-items:center;padding:8px 12px;background:var(--bg2);border:1px solid var(--bdr);border-radius:2px;margin-bottom:4px;font-size:10px}
+.dep-row.dep-hdr{font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--tx3);font-weight:600;background:transparent;border:none;padding-bottom:4px;margin-bottom:0}
+.dep-name{font-weight:600;color:var(--tx)}
+.dep-date{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--tx3)}
+.dep-total{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--tx)}
+.dep-paid{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;color:var(--acc)}
+.dep-bal{font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600}
+.dep-status{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:600;padding:2px 6px;border-radius:2px;text-align:center;letter-spacing:.06em}
+.dep-status.paid{background:var(--accdim);color:var(--acc2);border:1px solid rgba(0,180,90,.2)}
+.dep-status.partial{background:var(--amdim);color:var(--am);border:1px solid rgba(200,140,0,.2)}
+.dep-status.due{background:var(--rddim);color:var(--rd);border:1px solid rgba(204,34,34,.2)}
+.dep-status.unknown{background:var(--bg3);color:var(--tx3);border:1px solid var(--bdr)}
+.dep-bal.green{color:var(--acc)}.dep-bal.amber{color:var(--am)}.dep-bal.red{color:var(--rd)}
+
+/* RE-ENGAGEMENT SEQUENCER */
+.seq-layout{display:grid;grid-template-columns:300px 1fr;gap:12px}
+.seq-lead-list{background:var(--bg1);border:1px solid var(--bdr);border-radius:2px;overflow-y:auto;max-height:600px}
+.seq-lead-item{padding:9px 12px;border-bottom:1px solid var(--bdr);cursor:pointer;transition:background .1s}
+.seq-lead-item:hover{background:var(--bg2)}
+.seq-lead-item.sel{background:var(--accdim);border-left:2px solid var(--acc)}
+.seq-lead-name{font-size:11px;font-weight:600;color:var(--tx)}
+.seq-lead-meta{font-size:9px;color:var(--tx3);margin-top:2px}
+.seq-lead-status{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:1px 5px;border-radius:2px;font-weight:600;margin-top:3px;display:inline-block}
+.seq-panel{background:var(--bg1);border:1px solid var(--bdr);border-radius:2px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.seq-empty{display:flex;align-items:center;justify-content:center;height:100%;color:var(--tx3);font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:.1em}
+.seq-lead-detail{background:var(--bg2);border:1px solid var(--bdr);border-radius:2px;padding:12px}
+.seq-lead-detail-name{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:4px}
+.seq-meta-row{font-size:10px;color:var(--tx3);margin-bottom:2px}
+.seq-meta-row span{color:var(--tx2)}
+.seq-controls{display:flex;gap:8px;flex-wrap:wrap}
+.seq-select{flex:1;background:var(--bg2);border:1px solid var(--bdr2);border-radius:2px;padding:6px 9px;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:11px;outline:none;min-width:140px}
+.seq-select:focus{border-color:var(--acc3)}
+.seq-select option{background:var(--bg1)}
+.seq-gen-btn{padding:7px 16px;background:var(--accdim);border:1px solid var(--acc3);border-radius:2px;color:var(--acc);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;cursor:pointer;font-weight:600;white-space:nowrap}
+.seq-msg-box{background:var(--bg2);border:1px solid var(--bdr2);border-radius:2px;padding:12px;min-height:120px;font-size:11px;color:var(--tx);line-height:1.6;white-space:pre-wrap;font-family:'IBM Plex Sans',sans-serif}
+.seq-msg-box.empty{color:var(--tx3);font-style:italic;font-size:10px}
+.seq-actions{display:flex;gap:6px}
+.seq-copy{padding:6px 14px;background:var(--accdim);border:1px solid var(--acc3);border-radius:2px;color:var(--acc);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;cursor:pointer;font-weight:600}
+.seq-draft{padding:6px 14px;background:var(--amdim);border:1px solid rgba(200,140,0,.3);border-radius:2px;color:var(--am);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;cursor:pointer;font-weight:600}
+.seq-touch-chip{font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;background:var(--bg3);color:var(--tx3);border:1px solid var(--bdr)}
+.seq-touch-chip.active{background:var(--accdim);color:var(--acc2);border-color:var(--acc3)}
+.touch-row{display:flex;gap:4px;flex-wrap:wrap}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;align-items:center;justify-content:center}
+[data-theme="light"] .overlay{background:rgba(0,0,0,.35)}
+.overlay.on{display:flex}
+.modal{background:var(--bg1);border:1px solid var(--bdr2);border-radius:3px;padding:20px;width:440px;max-width:95vw;max-height:86vh;overflow-y:auto;box-shadow:0 8px 28px var(--shadow)}
+.mtitle{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--acc);margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--bdr);font-weight:600}
+.field{margin-bottom:10px}
+.field label{display:block;font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:.14em;color:var(--tx3);text-transform:uppercase;margin-bottom:4px;font-weight:600}
+.field input,.field select,.field textarea{width:100%;background:var(--bg2);border:1px solid var(--bdr2);border-radius:2px;padding:7px 9px;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:11px;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--acc3)}
+.field textarea{resize:vertical;min-height:50px}
+.field select option{background:var(--bg1)}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.macts{display:flex;gap:5px;margin-top:14px}
+.btn{padding:7px 14px;border-radius:2px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.08em;cursor:pointer;border:1px solid;font-weight:600}
+.btn-g{background:var(--accdim);border-color:var(--acc3);color:var(--acc)}
+.btn-n{background:transparent;border-color:var(--bdr2);color:var(--tx2)}
+.btn-r{background:var(--rddim);border-color:rgba(200,40,40,.22);color:var(--rd)}
+.msg-btn{background:var(--accdim);border:1px solid var(--acc3);border-radius:2px;color:var(--acc2);font-size:9px;padding:2px 6px;cursor:pointer;margin-left:3px;font-family:'IBM Plex Mono',monospace;font-weight:600;transition:all .1s;vertical-align:middle}
+.msg-btn:hover{background:rgba(0,180,90,.18)}
+
+.toast{position:fixed;bottom:20px;right:20px;padding:10px 18px;background:var(--bg3);border:1px solid var(--acc3);border-radius:3px;color:var(--acc);font-family:'IBM Plex Mono',monospace;font-size:10px;z-index:1000;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+<div class="topbar">
+  <div class="logo mono">ALFRED <sup>SIP N' SNACK ERP v4.0</sup></div>
+  <div class="tbr">
+    <div class="clock mono" id="clock">--:--:--</div>
+    <div class="tbtn" onclick="toggleTheme()">◐ <span id="tlbl">WHITE RAVEN</span></div>
+    <div class="live"><div class="live-dot"></div>LIVE</div>
+  </div>
+</div>
+
+<div class="wrap">
+<div class="ticker"><div class="ticker-inner" id="ticker"></div></div>
+<div class="body">
+
+<!-- SIDEBAR -->
+<div class="sb">
+  <div class="sb-sec">
+    <div class="sbl">Views</div>
+    <div class="sbi on" onclick="nav('dash',this)"><span>Dashboard</span></div>
+    <div class="sbi" onclick="nav('analytics',this)"><span>Analytics</span></div>
+    <div class="sbi" onclick="nav('events',this)"><span>Booked Events</span><span class="sbadge" id="nb-ev">28</span></div>
+    <div class="sbi" onclick="nav('deposits',this)"><span>Deposit Tracker</span><span class="sbadge" id="nb-dep">—</span></div>
+    <div class="sbi" onclick="nav('seq',this)"><span>Re-Engage</span><span class="sbadge" id="nb-seq">—</span></div>
+    <div class="sbi" onclick="nav('ig',this)"><span>IG Pipeline</span><span class="sbadge" id="nb-ig">—</span></div>
+    <div class="sbi" onclick="nav('wix',this)"><span>Wix / Email</span><span class="sbadge" id="nb-wix">—</span></div>
+    <div class="sbi" onclick="nav('corp',this)"><span>Corporate / Orgs</span><span class="sbadge" id="nb-corp">—</span></div>
+  </div>
+  <div class="sb-sec">
+    <div class="sbl">Live Stats</div>
+    <div class="sbstat"><div class="sbv" id="sm-active">—</div><div class="sbl2">Active Leads</div></div>
+    <div class="sbstat"><div class="sbv">$28.1K+</div><div class="sbl2">2026 Contracted</div></div>
+    <div class="sbstat"><div class="sbv" id="sm-dep-bal">—</div><div class="sbl2">Deposits Outstanding</div></div>
+  </div>
+  <div class="sb-sec">
+    <div class="sbl">Actions</div>
+    <div class="sbi" onclick="openAdd('ig')"><span>+ New IG Lead</span></div>
+    <div class="sbi" onclick="openAdd('wix')"><span>+ New Wix Lead</span></div>
+    <div class="sbi" onclick="doExport()"><span>Export JSON</span></div>
+    <div class="sbi" onclick="doImport()"><span>Import JSON</span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="scroll">
+
+<!-- DASHBOARD -->
+<div class="pg on" id="pg-dash">
+  <div class="g4">
+    <div class="kpi"><div class="kv" id="k-active">—</div><div class="kl">Active Leads</div><div class="ks" id="k-sub"></div></div>
+    <div class="kpi am"><div class="kv">$28.1K+</div><div class="kl">2026 Contracted</div><div class="ks">25 signed · $14K+ deposits due</div></div>
+    <div class="kpi"><div class="kv" id="k-won">—</div><div class="kl">CRM Closed</div><div class="ks" id="k-wons"></div></div>
+    <div class="kpi rd"><div class="kv" id="k-hot">—</div><div class="kl">Urgent / Hot</div><div class="ks">need action now</div></div>
+  </div>
+  <div class="sh"><div class="sl"></div><div class="st">Pipeline Flow</div><div class="sl"></div></div>
+  <div class="flow" id="flow"></div>
+  <div class="g2">
+    <div class="box"><div class="btitle">Whales ($2K+)</div><div id="whales"></div></div>
+    <div class="box"><div class="btitle">Action Required</div><div id="alerts"></div></div>
+  </div>
+  <div class="g2">
+    <div class="box"><div class="btitle">Status Distribution</div><div id="bar-st"></div></div>
+    <div class="box"><div class="btitle">2026 Revenue by Month (confirmed)</div><canvas id="rev-c" height="145"></canvas></div>
+  </div>
+</div>
+
+<!-- ANALYTICS -->
+<div class="pg" id="pg-analytics">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--tx3);letter-spacing:.15em;text-transform:uppercase;font-weight:600">YEAR VIEW</div>
+    <div class="ytog" id="ytog">
+      <div class="yb" onclick="setYr('2025',this)">2025</div>
+      <div class="yb on" onclick="setYr('2026',this)">2026</div>
+      <div class="yb" onclick="setYr('both',this)">BOTH</div>
+    </div>
+  </div>
+  <div class="g4" id="an-kpis"></div>
+
+  <div class="sh"><div class="sl"></div><div class="st">Inquiries by Month + Closes</div><div class="sl"></div></div>
+  <div class="box" style="margin-bottom:14px"><canvas id="inq-close-c" height="120"></canvas></div>
+
+  <div class="sh"><div class="sl"></div><div class="st">Monthly Close Rate %</div><div class="sl"></div></div>
+  <div class="box" style="margin-bottom:14px"><canvas id="close-c" height="100"></canvas></div>
+
+  <div class="sh"><div class="sl"></div><div class="st">2026 Revenue by Month (from contracts)</div><div class="sl"></div></div>
+  <div class="box" style="margin-bottom:14px"><canvas id="rev2-c" height="95"></canvas></div>
+
+  <div class="sh"><div class="sl"></div><div class="st">Ideal Client Profiles (ICP)</div><div class="sl"></div></div>
+  <div class="icp-grid">
+    <div class="icp"><div class="ict">Wedding / Ceremony</div>
+      <div class="ir"><span class="ik">Event types</span><span class="iv">Wedding, Holud, Mehndi, Nikkah</span></div>
+      <div class="ir"><span class="ik">Avg guests</span><span class="iv">175 · median 150</span></div>
+      <div class="ir"><span class="ik">Count</span><span class="iv">221 inquiries (2025-26)</span></div>
+      <div class="ir"><span class="ik">Top station</span><span class="iv">Bubble Tea</span></div>
+      <div class="ir"><span class="ik">Avg contract</span><span class="iv">~$1,600</span></div>
+      <div class="ir"><span class="ik">Close rate</span><span class="iv">~22%</span></div>
+    </div>
+    <div class="icp iam"><div class="ict">Social / Birthday / Shower</div>
+      <div class="ir"><span class="ik">Event types</span><span class="iv">Birthday, Bridal Shower, Baby Shower</span></div>
+      <div class="ir"><span class="ik">Avg guests</span><span class="iv">106 · median 85</span></div>
+      <div class="ir"><span class="ik">Count</span><span class="iv">185 inquiries</span></div>
+      <div class="ir"><span class="ik">Top station</span><span class="iv">Bubble Tea</span></div>
+      <div class="ir"><span class="ik">Avg contract</span><span class="iv">~$1,100</span></div>
+      <div class="ir"><span class="ik">Close rate</span><span class="iv">~14%</span></div>
+    </div>
+    <div class="icp ibl"><div class="ict">Corporate / University</div>
+      <div class="ir"><span class="ik">Event types</span><span class="iv">Corporate, Student Org, Events</span></div>
+      <div class="ir"><span class="ik">Avg guests</span><span class="iv">250+ · range 100-600</span></div>
+      <div class="ir"><span class="ik">Count</span><span class="iv">Growing fast in 2026</span></div>
+      <div class="ir"><span class="ik">Top station</span><span class="iv">Multi-station bundle</span></div>
+      <div class="ir"><span class="ik">Avg contract</span><span class="iv">$1,800-$4,000</span></div>
+      <div class="ir"><span class="ik">Close rate</span><span class="iv">High — prioritize</span></div>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div class="box"><div class="btitle">Guest Range Distribution</div><canvas id="guest-c" height="165"></canvas></div>
+    <div class="box"><div class="btitle">Top Menu Items Requested</div><div id="menu-bars"></div></div>
+  </div>
+
+  <div class="sh"><div class="sl"></div><div class="st">Top Event Types</div><div class="sl"></div></div>
+  <div class="box" style="margin-bottom:14px"><canvas id="event-c" height="100"></canvas></div>
+
+  <div class="sh"><div class="sl"></div><div class="st">Data-Backed Insights</div><div class="sl"></div></div>
+  <div class="ins ig"><div class="insico">📈</div><div><div class="insh">August is your peak — 50 inquiries, 12 closes, 24% rate in 2025</div><div class="insb">August 2026 has 5 confirmed contracts ($6,400). Still 15+ open Aug inquiries. Fill this month first.</div></div></div>
+  <div class="ins ia"><div class="insico">⚠️</div><div><div class="insh">2026 close rate dropped to 12.5% vs 18.7% in 2025 — re-engage pile is the fix</div><div class="insb">20+ quoted/no-response leads. Switch from email to text and call. That's where the 2025 closes came from.</div></div></div>
+  <div class="ins ig"><div class="insico">💰</div><div><div class="insh">Jun ($5,800) + Aug ($6,400) = 43% of all 2026 contracted revenue</div><div class="insb">Jun 21 has two contracts same-day (Rukhma Umer + Amrit Singh in NJ). Flag this for staffing now.</div></div></div>
+  <div class="ins ig"><div class="insico">🎯</div><div><div class="insh">78% of all inquiries are Bubble Tea only — bundle upsell gap is costing ~$600-800 per event</div><div class="insb">A "Boba + Fuchka Starter Bundle" at $1,400 flat pitched on every Boba-only quote would materially lift your AOV.</div></div></div>
+  <div class="ins ia"><div class="insico">🐋</div><div><div class="insh">4 whale leads (400-530g) stalled = ~$8K+ in pipeline</div><div class="insb">Ra Ali, Joshua Rodriguez, Sweem Khan, Asma Rizwan. Call them — don't text. These four alone = 25% of your contracted revenue if they close.</div></div></div>
+  <div class="ins ig"><div class="insico">🏢</div><div><div class="insh">Corporate is your highest-leverage channel — Fordham, SBU, Baruch, SJU, Amazon all in play right now</div><div class="insb">Fordham Holi (Garv Baid, 600 servings, invoice sent), Stony Brook Bengalis Unite (vendor registration in progress), Amazon NYC re-engaged. Corporate AOV is 2-3x private events.</div></div></div>
+  <div class="ins ig"><div class="insico">📅</div><div><div class="insh">You already have a 2027 contract — Justine Nardone, May 7, Staten Island</div><div class="insb">Your sales cycle for Jun-Oct 2026 events should be in full swing right now. Start targeting fall weddings booking 6 months out.</div></div></div>
+</div>
+
+<!-- BOOKED EVENTS -->
+<div class="pg" id="pg-events">
+  <div class="g4" style="margin-bottom:16px">
+    <div class="kpi am"><div class="kv">$28.1K+</div><div class="kl">2026 Confirmed</div><div class="ks">17 events with values</div></div>
+    <div class="kpi"><div class="kv">28</div><div class="kl">2026 Contracts</div><div class="ks">8 without quote value yet</div></div>
+    <div class="kpi"><div class="kv">$1,652</div><div class="kl">Avg Contract (valued)</div><div class="ks">range $800-$3,000</div></div>
+    <div class="kpi bl"><div class="kv">1</div><div class="kl">2027 Already Booked</div><div class="ks">Justine Nardone · May 7</div></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+    <div class="ytog" id="ev-ytog">
+      <div class="yb" onclick="setEvYr('2025',this)">2025</div>
+      <div class="yb on" onclick="setEvYr('2026',this)">2026</div>
+      <div class="yb" onclick="setEvYr('2027',this)">2027</div>
+      <div class="yb" onclick="setEvYr('all',this)">ALL</div>
+    </div>
+  </div>
+  <div class="g3" id="ev-cards"></div>
+</div>
+
+<!-- DEPOSIT TRACKER -->
+<div class="pg" id="pg-deposits">
+  <div class="g4" style="margin-bottom:16px">
+    <div class="kpi am"><div class="kv" id="dep-total-v">—</div><div class="kl">Total Contracted</div><div class="ks">events with values on file</div></div>
+    <div class="kpi"><div class="kv" id="dep-paid-v">—</div><div class="kl">Deposits Collected</div><div class="ks">confirmed paid</div></div>
+    <div class="kpi rd"><div class="kv" id="dep-bal-v">—</div><div class="kl">Balance Outstanding</div><div class="ks">remaining to collect</div></div>
+    <div class="kpi bl"><div class="kv" id="dep-unknown-v">—</div><div class="kl">Value Not On File</div><div class="ks">contracts with no quote</div></div>
+  </div>
+  <div class="sh"><div class="sl"></div><div class="st">Contracts — Balance Status</div><div class="sl"></div></div>
+  <div class="dep-row dep-hdr">
+    <div>Client</div><div>Event Date</div><div>Total</div><div>Paid</div><div>Balance / Status</div>
+  </div>
+  <div id="dep-rows"></div>
+</div>
+
+<!-- RE-ENGAGEMENT SEQUENCER -->
+<div class="pg" id="pg-seq">
+  <div class="g4" style="margin-bottom:14px">
+    <div class="kpi rd"><div class="kv" id="seq-k1">—</div><div class="kl">Need Re-Engage</div><div class="ks">quoted, no response</div></div>
+    <div class="kpi am"><div class="kv" id="seq-k2">—</div><div class="kl">Avg Days Silent</div><div class="ks">since last touch</div></div>
+    <div class="kpi"><div class="kv" id="seq-k3">—</div><div class="kl">Nurture Stage</div><div class="ks">not yet urgent</div></div>
+    <div class="kpi bl"><div class="kv" id="seq-k4">—</div><div class="kl">Total Follow-Ups</div><div class="ks">in active pipeline</div></div>
+  </div>
+  <div class="seq-layout">
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--tx3);letter-spacing:.15em;text-transform:uppercase;font-weight:600;margin-bottom:6px">SELECT LEAD</div>
+      <div class="seq-lead-list" id="seq-list"></div>
+    </div>
+    <div class="seq-panel" id="seq-panel">
+      <div class="seq-empty">Select a lead to generate a follow-up message</div>
+    </div>
+  </div>
+</div>
+
+<!-- IG PIPELINE -->
+<div class="pg" id="pg-ig">
+  <div class="srch"><input type="text" placeholder="Search IG leads..." oninput="doSearch('ig',this.value)"></div>
+  <div class="sec-acts">
+    <div class="fbar" id="fbar-ig">
+      <button class="fb on" onclick="setF('ig','all',this)">ALL</button>
+      <button class="fb" onclick="setF('ig','urgent',this)">URGENT</button>
+      <button class="fb" onclick="setF('ig','hot',this)">HOT</button>
+      <button class="fb" onclick="setF('ig','pending',this)">PENDING</button>
+      <button class="fb" onclick="setF('ig','nurture',this)">NURTURE</button>
+      <button class="fb" onclick="setF('ig','closed',this)">CLOSED</button>
+      <button class="fb" onclick="setF('ig','lost',this)">LOST</button>
+    </div>
+    <div class="add-btn" onclick="openAdd('ig')">+ NEW LEAD</div>
+  </div>
+  <div id="ig-body"></div>
+</div>
+
+<!-- WIX PIPELINE -->
+<div class="pg" id="pg-wix">
+  <div class="srch"><input type="text" placeholder="Search Wix / email leads..." oninput="doSearch('wix',this.value)"></div>
+  <div class="sec-acts">
+    <div class="fbar" id="fbar-wix">
+      <button class="fb on" onclick="setF('wix','all',this)">ALL</button>
+      <button class="fb" onclick="setF('wix','hot',this)">HOT</button>
+      <button class="fb" onclick="setF('wix','urgent',this)">URGENT</button>
+      <button class="fb" onclick="setF('wix','reengage',this)">RE-ENGAGE</button>
+      <button class="fb" onclick="setF('wix','clarify',this)">CLARIFY</button>
+      <button class="fb" onclick="setF('wix','oos',this)">OOS</button>
+      <button class="fb" onclick="setF('wix','closed',this)">CLOSED</button>
+      <button class="fb" onclick="setF('wix','lost',this)">LOST</button>
+    </div>
+    <div class="add-btn" onclick="openAdd('wix')">+ NEW LEAD</div>
+  </div>
+  <div id="wix-body"></div>
+</div>
+
+<!-- CORPORATE / ORGS PIPELINE -->
+<div class="pg" id="pg-corp">
+  <div class="srch"><input type="text" placeholder="Search corporate, student org, civic leads..." oninput="doSearch('corp',this.value)"></div>
+  <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+    <div class="fbar" id="fbar-corp">
+      <button class="fb on" onclick="setF('corp','all',this)">ALL</button>
+      <button class="fb" onclick="setF('corp','hot',this)">HOT</button>
+      <button class="fb" onclick="setF('corp','pending',this)">PENDING</button>
+      <button class="fb" onclick="setF('corp','closed',this)">CLOSED</button>
+      <button class="fb" onclick="setF('corp','lost',this)">LOST</button>
+    </div>
+    <div style="display:flex;gap:4px;margin-left:auto">
+      <div class="fb on" id="corp-f-all" onclick="filterCorpType('all',this)" style="cursor:pointer">ALL TYPES</div>
+      <div class="fb" id="corp-f-student" onclick="filterCorpType('student',this)" style="cursor:pointer">STUDENT ORG</div>
+      <div class="fb" id="corp-f-corporate" onclick="filterCorpType('corporate',this)" style="cursor:pointer">CORPORATE</div>
+      <div class="fb" id="corp-f-civic" onclick="filterCorpType('civic',this)" style="cursor:pointer">CIVIC / OTHER</div>
+    </div>
+  </div>
+  <div class="sec-acts" style="margin-bottom:8px">
+    <div style="font-size:9px;color:var(--tx3);font-family:'IBM Plex Mono',monospace;letter-spacing:.1em">TRACKING: Student Orgs · Corporate Events · Civic / Community Organizations</div>
+    <div class="add-btn" onclick="openAdd('corp')">+ NEW ORG LEAD</div>
+  </div>
+  <div id="corp-body"></div>
+</div>
+
+</div></div></div></div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="mtitle" id="mtitle">EDIT LEAD</div>
+    <div class="r2"><div class="field"><label>Name</label><input id="f-name"></div><div class="field"><label>Handle</label><input id="f-handle"></div></div>
+    <div class="r2"><div class="field"><label>Event Date</label><input id="f-date"></div><div class="field"><label>Guests</label><input id="f-guests"></div></div>
+    <div class="field"><label>Venue / Location</label><input id="f-venue"></div>
+    <div class="field"><label>Services</label><input id="f-food"></div>
+    <div class="field" id="f-org-row" style="display:none"><label>Organization Name</label><input id="f-org" placeholder="e.g. Baruch College, Amazon"></div>
+    <div class="r2">
+      <div class="field"><label>Quote Value</label><input id="f-value"></div>
+      <div class="field"><label>Status</label>
+        <select id="f-status">
+          <option value="urgent">URGENT</option><option value="hot">HOT</option><option value="pending">PENDING</option>
+          <option value="nurture">NURTURE</option><option value="reengage">RE-ENGAGE</option><option value="clarify">CLARIFY</option>
+          <option value="oos">OUT OF STATE</option><option value="closed">CLOSED</option><option value="lost">LOST</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Contact (email / phone)</label><input id="f-contact"></div>
+    <div class="field" id="f-orgtype-row" style="display:none"><label>Org Type</label>
+      <select id="f-orgtype"><option value="corporate">Corporate</option><option value="student">Student Org</option><option value="civic">Civic / Community</option></select>
+    </div>
+    <div class="field"><label>Objection Type</label>
+      <select id="f-obj">
+        <option value="">— None —</option>
+        <option value="budget">Budget concern</option>
+        <option value="spouse">Spouse / family discussion</option>
+        <option value="venue">Venue approval pending</option>
+        <option value="vendors">Main vendors first</option>
+        <option value="proof">Need more proof of concept</option>
+        <option value="ghost">Just ghosting / no response</option>
+      </select>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="f-notes"></textarea></div>
+    <div class="r2">
+      <div class="field"><label>Last Touch</label><input id="f-last"></div>
+      <div class="field"><label>Pipeline</label><select id="f-pipe" onchange="document.getElementById('f-org-row').style.display=this.value==='corp'?'block':'none'"><option value="ig">Instagram</option><option value="wix">Wix / Email</option><option value="corp">Corporate / Org</option></select></div>
+    </div>
+    <div class="macts">
+      <button class="btn btn-g" onclick="saveCard()">SAVE</button>
+      <button class="btn btn-n" onclick="closeModal()">CANCEL</button>
+      <button class="btn btn-r" id="del-btn" onclick="deleteCard()">DELETE</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── REAL EVENTS DATA (Google Calendar + Jotform/HoneyBook Gmail) ─────────────
+const EVENTS=[
+  {n:'Harjot Singh',dt:'Jan 3, 2026',v:'11 S Broadway, Hicksville NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:1},
+  {n:'Telesha Mahadeo',dt:'Feb 26, 2026',v:'8850 192nd St, Hollis NY',val:800,dep:400,paid:400,src:'Jotform',yr:2026,mo:2},
+  {n:'South Asian & Indo-Caribbean Democratic Club',dt:'Mar 27, 2026',v:'Guy R. Brewer United Democratic Club, Jamaica NY',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:3,type:'Corporate'},
+  {n:'Jasmin Kaur (Binghamton University)',dt:'Mar 22, 2026',v:'4400 Vestal Pkwy, Binghamton NY',val:2000,dep:1000,paid:1000,src:'Jotform',yr:2026,mo:3,type:'University'},
+  {n:'Tanima Alim-Pritom',dt:'Mar 29, 2026',v:'The Elan, NJ',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:3},
+  {n:'Alima Khan',dt:'Apr 2, 2026',v:'10 Milburn, Valley Stream NY',val:950,dep:475,paid:475,src:'Jotform',yr:2026,mo:4},
+  {n:'Laiba Salman',dt:'Apr 11, 2026',v:'881 US-206, Bridgewater NJ',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:4},
+  {n:'Nusrath Jahan',dt:'Apr 24, 2026',v:'13-05 43rd Ave, Long Island City NY',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:4},
+  {n:'Sumathi Arumugam',dt:'Apr 19, 2026',v:'2 Sparrow Dr, Princeton Junction NJ',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:4},
+  {n:'Purva Patel',dt:'May 17, 2026',v:'305 W Northfield Rd, Livingston NJ',val:1700,dep:850,paid:850,src:'Jotform',yr:2026,mo:5},
+  {n:'Nabila Hoque',dt:'May 17, 2026',v:'1444 NJ-73, Pennsaucken NJ',val:2000,dep:1000,paid:1000,src:'Jotform',yr:2026,mo:5},
+  {n:'Rukhma Umer',dt:'Jun 21, 2026',v:'1444 NJ-73, Pennsauken NJ (Eden Gardens)',val:2500,dep:1250,paid:1250,src:'Jotform',yr:2026,mo:6},
+  {n:'Amrit Singh',dt:'Jun 21, 2026',v:'2201 Galloway Rd, Bensalem PA',val:2100,dep:1050,paid:1050,src:'Jotform',yr:2026,mo:6},
+  {n:'Amanpreet Dulku',dt:'Jun 24, 2026',v:'820 NJ-73, Marlton NJ',val:1150,dep:575,paid:575,src:'Jotform',yr:2026,mo:6},
+  {n:'Navjeet Kaur',dt:'Jun 26, 2026',v:'225 Water St, Binghamton NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:6},
+  {n:'Satvir Kaur',dt:'Jul 8, 2026',v:'34 Regent St, Valley Stream NY',val:1300,dep:650,paid:650,src:'HoneyBook',yr:2026,mo:7},
+  {n:'Farah Khalid',dt:'Jul 10, 2026',v:'Omni Hotel, CT',val:null,dep:2000,paid:1000,src:'Jotform',yr:2026,mo:7,note:'$1,000 paid confirmed via email · balance $1,000'},
+  {n:'Tajram Bissoondial',dt:'Jul 23, 2026',v:'13138 131st St, Jamaica NY',val:1250,dep:625,paid:625,src:'Jotform',yr:2026,mo:7},
+  {n:'Taseen Islam',dt:'Jul 26, 2026',v:'114-11 91st Ave, Richmond Hill NY',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:7},
+  {n:'Sadia Malik',dt:'Jul 31, 2026',v:'5720 Route 25A, Wading River NY',val:1300,dep:650,paid:650,src:'Jotform',yr:2026,mo:7},
+  {n:'Shannon Lima',dt:'Aug 8, 2026',v:'25-22 Astoria Blvd, Astoria NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:8},
+  {n:'Israt Motaleb',dt:'Aug 10, 2026',v:'13-05 43rd Ave, Long Island City NY',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:8},
+  {n:'Gonisha Bhoodai',dt:'Aug 12, 2026',v:'10420 102nd St, Ozone Park NY',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:8},
+  {n:'Abhinav Bassi',dt:'Aug 14, 2026',v:'977 Washington Valley Rd, Basking Ridge NJ',val:2400,dep:1200,paid:0,src:'Jotform',yr:2026,mo:8,note:'Paying day before event ($1,200 remaining)'},
+  {n:'Maithili Patel',dt:'Aug 16, 2026',v:'1550 US-9, Old Bridge NJ',val:3000,dep:1500,paid:1500,src:'Jotform',yr:2026,mo:8},
+  {n:'Trisa Chakraborty',dt:'Sep 19, 2026',v:'Martinsville Gardens, NJ',val:2400,dep:1200,paid:1200,src:'Jotform',yr:2026,mo:9},
+  {n:'Aneksha',dt:'Sep 17, 2026',v:'8 Castlehill Dr, Marlboro Township NJ',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:9},
+  {n:'Jill Diwankatera',dt:'Oct 17, 2026',v:'500 Veterans Memorial Dr, Pearl River NY',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:10},
+  // 2025
+  {n:'Shahreen Jahan',dt:'Aug 1, 2025',v:'169 S Salem St, Randolph NJ',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Mashiyate Meem',dt:'Aug 1, 2025',v:'Legacy Castle, Pompton Plains NJ',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Shakib Hossain',dt:'Aug 1, 2025',v:"Royal Albert's Palace, Fords NJ",val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Ina Kharbanda',dt:'Aug 2, 2025',v:'Akbar Restaurant, Garden City NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Jannat Hossain',dt:'Aug 3, 2025',v:'276 W Old Country Rd, Hicksville NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Sheena Patel',dt:'Aug 8, 2025',v:'Aashirwad Palace, Randolph NJ',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Zainub Gondal',dt:'Aug 9, 2025',v:'Terrace on the Park, Queens NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Tania Akhter',dt:'Aug 9, 2025',v:'276 W Old Country Rd, Hicksville NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Ayesha Khan',dt:'Aug 23, 2025',v:'7 Stephens Path, Port Jefferson NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Nabila Chowdhury',dt:'Aug 29, 2025',v:"World's Fair Marina, NY",val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
+  {n:'Sanjana Rahman',dt:'Dec 28, 2025',v:'845 S Wellwood Ave, Lindenhurst NY',val:1500,dep:750,paid:750,src:'Jotform',yr:2025,mo:12},
+  // 2027
+  {n:'Justine Nardone',dt:'May 7, 2027',v:'1100 South Ave, Staten Island NY',val:null,dep:null,paid:0,src:'Jotform',yr:2027,mo:5}];
+
+// ─── ANALYTICS DATA ────────────────────────────────────────────────────────────
+const M25={inq:[5,6,2,11,29,32,30,50,29,20,19,8],bk:[2,2,0,4,5,2,4,12,6,4,2,2]};
+const M26={inq:[5,5,13,23,17,19,13,15,14,9,1,2],bk:[1,0,1,2,1,1,1,4,3,3,0,0]};
+const REV26=[1200,800,4000,1950,3700,5800,3850,6400,2400,1000,0,0];
+const MOS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// ─── CRM DATA ─────────────────────────────────────────────────────────────────
+const DEF={
+ig:[
+// ── URGENT ──
+{id:'ig1',name:'Aliya Shaikh',handle:'@_aaliaaaa',date:'Mar 27',venue:'Martinsville Gardens, NJ',guests:'100',food:'Boba + Falooda',value:'$1,400',contact:'',status:'urgent',notes:'Event is TODAY — quoted bundle $1,400, seen 2h ago, no response. Follow up NOW.',last:'Today',obj:'ghost',pipe:'ig'},
+// ── HOT ──
+{id:'ig3',name:'Baruch SASA',handle:'',date:'Apr 17',venue:'Baruch College',guests:'TBD',food:'TBD',value:'$1,800',contact:'',status:'hot',notes:'Proposal + quote sent, Apr 17 is close — follow up now',last:'',obj:'',pipe:'ig'},
+{id:'ig4',name:'Anmol',handle:'@anmolsondhi',date:'Apr 19',venue:'Bell Works, NJ',guests:'300',food:'Boba + cold brew latte',value:'$1,600',contact:'',status:'hot',notes:'Quoted $1,600, confirmed we do cold brew lattes, seen — no response',last:'Mar 5',obj:'ghost',pipe:'ig'},
+{id:'ig5',name:'notnuv_',handle:'@notnuv_',date:'Apr 18',venue:'East Meadow, Long Island',guests:'50',food:'Pani Puri + Boba',value:'$1,200',contact:'',status:'hot',notes:'Bundle $1,200 quoted, seen',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_esme',name:'Esme',handle:'@tarsunh',date:'Jul 19',venue:'Royal Palm, Long Island NY',guests:'300',food:'Pani Puri + Boba (bundle) or Boba + Jhaal Muri separate',value:'$2,000 bundle / $2,800 separate',contact:'',status:'hot',notes:'Quoted both ways: bundle $2,000 (save $400-500), separate Boba $1,600 + Jhaal Muri $1,200. Upsell pitch sent. No response.',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_sree',name:'Sree Hanisha',handle:'@_ha_nisha_',date:'May 1',venue:'North Brunswick, NJ',guests:'100',food:'Boba + Bhel/Jhaal Muri',value:'$1,500 bundle',contact:'',status:'hot',notes:'Quoted: Boba $1,000 + Bhel $900, bundle $1,500 (save $400). Seen. No response.',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_flo',name:'Flo Whitehead',handle:'@flow23',date:'Jun 25',venue:'Bensalem, PA',guests:'100',food:'Bubble Tea',value:'$1,600',contact:'',status:'hot',notes:'Quoted $1,600 includes travel to Bensalem. Seen 30min ago. No response.',last:'Today',obj:'ghost',pipe:'ig'},
+// ── PENDING CLOSE ──
+{id:'ig6',name:'Tejasvi Sahni Kohli',handle:'@tejasvi.sahni.kohli',date:'Apr 18',venue:'Manhattan, NY',guests:'40',food:'Boba',value:'$800',contact:'',status:'pending',notes:'Quoted $800, pending appointment request showing in DMs',last:'',obj:'',pipe:'ig'},
+{id:'ig7',name:'Mitali Shah',handle:'@mitaliii31',date:'Apr 30',venue:'Westin Mt Laurel, NJ',guests:'200-250',food:'Boba (Sangeet)',value:'$1,600',contact:'',status:'pending',notes:'Quoted $1,600, responded "thanks for the quote!" — needs follow up nudge',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig8',name:'ZK',handle:'@notakhan',date:'Apr 26',venue:'Piscataway, NJ',guests:'150',food:'Boba + Falooda',value:'$1,500',contact:'',status:'pending',notes:'Quoted full breakdown — Boba+Falooda $1,500, lychee jelly +$1/serving. Seen.',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_sarah',name:'Sarah',handle:'@katashtrofi',date:'Jul 2026',venue:'Queens, NY',guests:'75',food:'Boba (2-3 flavors) + 50 Charcuterie cups',value:'$1,100 bundle',contact:'',status:'pending',notes:'Quoted: Boba $800, Charcuterie $800, bundle $1,100. Waiting on decision.',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_erina',name:'Erina Nowshin',handle:'@bodaciousarker',date:'Apr 18',venue:'Hamden, CT',guests:'50-60',food:'Bubble Tea',value:'$1,000',contact:'',status:'pending',notes:'Quoted $800 base + $200 travel CT. Trying to get team approval to double to 100 servings same price. Seen 2h ago.',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_arslan',name:'Arslan Khokhar',handle:'@sallukhokhar123',date:'May 10 or 12',venue:'Brooklyn, NY',guests:'60',food:'Boba + Pani Puri',value:'TBD',contact:'',status:'pending',notes:'Gave full details — needs quote drafted. Brooklyn May 10 or 12, 60g, Boba + Pani Puri.',last:'',obj:'',pipe:'ig'},
+{id:'ig_mahira',name:'Mahira Mahmood',handle:'@mahiramahmood',date:'Apr 18',venue:'Elmont, NY',guests:'50',food:'Boba + Pani Puri',value:'$1,000 bundle',contact:'',status:'pending',notes:'Quoted Boba+Pani Puri bundle $1,000. "Happy to answer any other questions"',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_bindu',name:'Bindu Varghese-Abraham',handle:'@akdphibrownsuga',date:'Jun 20',venue:'New Hyde Park, NY',guests:'80',food:'Boba + Falooda',value:'$1,280 bundle',contact:'',status:'pending',notes:'Quoted $800 each / bundle $1,280. Said "out of budget." Rahmi asked for budget number.',last:'',obj:'budget',pipe:'ig'},
+{id:'ig_sri',name:'Sri Lakshmi Yedlapalli',handle:'@srilakshmi.yedlapalli',date:'TBD',venue:'100+ miles from NY',guests:'150',food:'Boba',value:'$1,200',contact:'(212) 470-6893 given',status:'pending',notes:'Half-saree ceremony. Price pushback handled — offered extra servings. Asked for number, gave it. Said "will call tomorrow." WARM — call expected.',last:'Today',obj:'budget',pipe:'ig'},
+{id:'ig11',name:'Ra Ali',handle:'@razu.ali.10',date:'Jul 6',venue:'Green Tree CC',guests:'450',food:'Boba',value:'~$2,400',contact:'',status:'pending',notes:'Budget objection, Eid re-engaged',last:'',obj:'budget',pipe:'ig'},
+{id:'ig_nirali',name:'Nirali Patel',handle:'@niralix3',date:'Jul 23 (150g) or Jul 24 (400g)',venue:'Newark, DE',guests:'150-400',food:'Boba',value:'$2,000-$2,800',contact:'',status:'pending',notes:'Quoted $2,000 for 200g, $2,800 for 400g. Fiancé discussion — said will follow up after major vendors. 3hrs away.',last:'',obj:'vendors',pipe:'ig'},
+// ── CLARIFY ──
+{id:'ig_shivani',name:'Shivani Gour',handle:'@shiviii23',date:'Apr 9',venue:'Woodbridge, NJ',guests:'TBD',food:'Boba',value:'TBD',contact:'',status:'clarify',notes:'Asked for guest count, waiting on response',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig_sumaiya',name:'Sumaiya Khan Disha',handle:'@skhan_disha',date:'Nov 28',venue:'Long Island, NY',guests:'50-60',food:'Boba + Fuchka (maybe)',value:'TBD',contact:'',status:'clarify',notes:'Gave details: Long Island, Nov 28, 50-60g, Boba + Fuchka maybe. Needs quote.',last:'',obj:'',pipe:'ig'},
+{id:'ig_gauri',name:'Gauri Patel',handle:'@gaurisp09',date:'Jun 26',venue:'Backyard, TBD',guests:'TBD',food:'Boba',value:'TBD',contact:'',status:'clarify',notes:'Backyard HS graduation Jun 26. Asked about brunch food (not our menu) — redirect to boba only and quote.',last:'',obj:'',pipe:'ig'},
+// ── NURTURE ──
+{id:'ig12',name:'Adil Ahmed',handle:'@adillionaire_',date:'Aug 1',venue:'Surf Club NY',guests:'400',food:'Boba + Fuchka',value:'~$2,400',contact:'',status:'nurture',notes:'Main vendors first, Eid re-engaged',last:'',obj:'vendors',pipe:'ig'},
+{id:'ig13',name:'Hasina',handle:'@hasina277',date:'Apr 25',venue:'Bridgewater NJ',guests:'250',food:'Boba',value:'$1,400',contact:'',status:'nurture',notes:'Crowd fit objection, followed up',last:'',obj:'proof',pipe:'ig'},
+{id:'ig14',name:'Tanzeem',handle:'@highlight_tc',date:'Jul 25',venue:'Plano TX',guests:'200',food:'Falooda + Fuchka',value:'$1,400-$2,600',contact:'',status:'nurture',notes:'',last:'',obj:'',pipe:'ig'},
+{id:'ig15',name:'Hardeep',handle:'@hdulkoo20',date:'Oct 11',venue:'Cockeysville MD',guests:'250',food:'Pani Puri/Fuchka + Boba',value:'$2,000-$2,900',contact:'',status:'nurture',notes:'',last:'',obj:'',pipe:'ig'},
+{id:'ig16',name:'Ananya Prakash',handle:'@ananya_prakash',date:'Sep 11',venue:'Renault Winery NJ',guests:'300',food:'Pani Puri/Bhel',value:'TBD',contact:'',status:'nurture',notes:'',last:'',obj:'',pipe:'ig'},
+{id:'ig17',name:'Seema Patel',handle:'@she.seems.patel',date:'Jul 3',venue:'Newport Marriott',guests:'300',food:'Boba',value:'$2,000',contact:'',status:'nurture',notes:'End of March decision with dad',last:'',obj:'spouse',pipe:'ig'},
+{id:'ig18',name:'Meghla Srabon-Khan',handle:'@meghlasrab.n',date:'Jul 4/5',venue:'Jamaica Queens',guests:'80',food:'Boba + Fuchka + Jhaal Muri',value:'$700-$1,400',contact:'',status:'nurture',notes:'Husband discussion',last:'',obj:'spouse',pipe:'ig'},
+{id:'ig19',name:'Mehrab',handle:'@qmehrabh',date:'Jun 2026',venue:'TBD',guests:'180-200',food:'Boba/Fuchka',value:'TBD',contact:'',status:'nurture',notes:'Post-Eid follow up',last:'',obj:'ghost',pipe:'ig'},
+{id:'ig20',name:'Sadia Mohona',handle:'@sadia.mohona',date:'Summer 2026',venue:'Queens NY',guests:'200',food:'Boba',value:'$1,200-$1,400',contact:'',status:'nurture',notes:'Event moved to end of summer, follow up mid-June+',last:'',obj:'',pipe:'ig'},
+// ── CLOSED ──
+{id:'ig_pooja',name:'Pooja Patel',handle:'@poojatell52544',date:'Jun 7',venue:'Addison Park, NJ (outdoor wedding)',guests:'300',food:'Boba',value:'$1,600',contact:'poojabhavpatel@gmail.com',status:'closed',notes:'CONTRACT SENT Mar 24 — 50% deposit pending via Zelle. 300g outdoor wedding.',last:'Mar 24',obj:'',pipe:'ig'},
+{id:'ig21',name:'Satvir Kaur',handle:'@___satvir___',date:'Jul 8',venue:'Valley Stream NY',guests:'100',food:'Boba + Falooda + Pani Puri',value:'$1,300',contact:'',status:'closed',notes:'Contracted HoneyBook Mar 20',last:'',obj:'',pipe:'ig'},
+{id:'ig22',name:'Suria Dyal',handle:'',date:'Mar 2026',venue:'TBD',guests:'',food:'',value:'',contact:'',status:'closed',notes:'Contract signed Mar 13',last:'',obj:'',pipe:'ig'},
+{id:'ig23',name:'Sheza Ali',handle:'',date:'TBD',venue:'TBD',guests:'',food:'',value:'',contact:'',status:'closed',notes:'Contract signed Mar 13',last:'',obj:'',pipe:'ig'},
+{id:'ig24',name:'Tanima',handle:'@crimsonteal5',date:'Mar 29, 2026',venue:'The Elan, NJ',guests:'',food:'',value:'',contact:'',status:'closed',notes:'Jotform signed Mar 12',last:'',obj:'',pipe:'ig'},
+// ── LOST ──
+{id:'ig1_pema',name:'Pema',handle:'',date:'Mar 28',venue:'Queens, NY',guests:'200',food:'Boba',value:'$1,200',contact:'',status:'lost',notes:'Lost',last:'',obj:'',pipe:'ig'},
+{id:'ig25',name:'Diva Patel',handle:'@thedivapatel',date:'May 9',venue:'Ashburn VA',guests:'100',food:'Boba + Pani Puri + Falooda',value:'~$2,000',contact:'',status:'lost',notes:'Budget',last:'',obj:'',pipe:'ig'},
+{id:'ig26',name:'Kiruthi Subramanian',handle:'@kaysubss_',date:'Jun 21',venue:'Mt Olive NJ',guests:'50',food:'Boba + Pani Puri',value:'$900-$1,400',contact:'',status:'lost',notes:'Budget',last:'',obj:'',pipe:'ig'},
+{id:'ig27',name:'Farukh',handle:'@farukhk',date:'Jul 31',venue:'Prospect CT',guests:'175',food:'Boba',value:'$1,600',contact:'',status:'lost',notes:'',last:'',obj:'',pipe:'ig'},
+{id:'ig28',name:'Fouzia',handle:'@fouziaxo',date:'Apr 18',venue:'Aashiward Palace NJ',guests:'200',food:'Boba + Falooda',value:'$2,100',contact:'',status:'lost',notes:'Not interested',last:'',obj:'',pipe:'ig'}
+],
+wix:[
+{id:'w1',name:'Joshua Rodriguez',date:'May 24',venue:'NYC Networking Event',guests:'530',food:'Bubble Tea',value:'TBD',contact:'',status:'hot',notes:'Re-engaged — 530 guests corporate whale — quote ASAP',last:'Today',obj:'ghost',pipe:'wix'},
+{id:'w2',name:'Eric Taylor',date:'Apr 24',venue:'Amazon NYC',guests:'250',food:'Bubble Tea',value:'TBD',contact:'',status:'hot',notes:'Re-engaged — corporate',last:'Today',obj:'ghost',pipe:'wix'},
+{id:'w3',name:'Romana Hasim',date:'Mar 27',venue:'Queens',guests:'120',food:'Bubble Tea',value:'TBD',contact:'',status:'urgent',notes:'Days away',last:'Mar 5',obj:'ghost',pipe:'wix'},
+{id:'w4',name:'Elizabeth Anwar',date:'Mar 28',venue:'NJ',guests:'80',food:'Falooda + Ice Cream',value:'TBD',contact:'',status:'urgent',notes:'Days away',last:'Mar 5',obj:'ghost',pipe:'wix'},
+{id:'w5',name:'Sazia Afrin',date:'Mar 28',venue:"Jassi's Fine Cuisine",guests:'120',food:'Bubble Tea',value:'TBD',contact:'',status:'urgent',notes:'Days away',last:'Mar 5',obj:'ghost',pipe:'wix'},
+{id:'w6',name:'Tamanna Nur',date:'Mar 29',venue:'Smithtown NY',guests:'50',food:'Bubble Tea',value:'TBD',contact:'',status:'urgent',notes:'',last:'Jan 31',obj:'ghost',pipe:'wix'},
+{id:'w7',name:'Roshni Rahim',date:'Apr 2',venue:'Royal Palm',guests:'250',food:'Bubble Tea',value:'TBD',contact:'',status:'urgent',notes:'',last:'Jan 4',obj:'ghost',pipe:'wix'},
+{id:'w8',name:'Previa Mohan',date:'Apr 23',venue:'TBD',guests:'250',food:'Boba + Fuchka + Pani + Bhel + Ice Cream + Falooda',value:'~$4,000',contact:'prevmohan@gmail.com / (804) 310-1102',status:'urgent',notes:'6 stations — $4K+ opportunity',last:'Feb 20',obj:'ghost',pipe:'wix'},
+{id:'w9',name:'Iqra Hasan',date:'Apr 17',venue:'Grand Marquis NJ',guests:'150',food:'Bubble Tea',value:'TBD',contact:'iqra.hasan8@gmail.com / (609) 433-2100',status:'urgent',notes:'Re-engage text + call',last:'Mar 2',obj:'ghost',pipe:'wix'},
+{id:'w10',name:'Moksha Patel',date:'May 3',venue:'Royal Albert Palace NJ',guests:'250',food:'Fruit Tea + Falooda + Brown Sugar + Kashmiri Chai',value:'TBD',contact:'mokshapatel22@gmail.com / (513) 827-4369',status:'urgent',notes:'Re-engage call + text',last:'Mar 2',obj:'ghost',pipe:'wix'},
+{id:'w11',name:'Tahmena Begum',date:'Apr 4',venue:'New Jersey',guests:'200',food:'Fuchka + Bhel Puri',value:'TBD',contact:'',status:'urgent',notes:'',last:'Mar 5',obj:'ghost',pipe:'wix'},
+{id:'w12',name:'Mariya Fatakdawala',date:'Apr 17',venue:'Suffern NY',guests:'100',food:'Boba + Falooda',value:'TBD',contact:'',status:'urgent',notes:'Quoted',last:'Mar 5',obj:'ghost',pipe:'wix'},
+{id:'w13',name:'Sasha Mir',date:'Apr 18',venue:'Pearl Banquet Hicksville',guests:'200',food:'Bubble Tea',value:'TBD',contact:'',status:'urgent',notes:'',last:'Feb 18',obj:'ghost',pipe:'wix'},
+{id:'w14',name:'Gurleena Singh',date:'May 13+14',venue:'Farmingdale NY',guests:'75+250',food:'Boba + Falooda + Charcuterie (2 days)',value:'TBD',contact:'singhgurleena@gmail.com / (347) 554-3705',status:'reengage',notes:'Two-day Mehndi + Jaggo',last:'Feb 20',obj:'ghost',pipe:'wix'},
+{id:'w15',name:'Malak Abdelwhab',date:'Jun 25',venue:'5 Star Banquets LIC',guests:'150',food:'Boba',value:'TBD',contact:'abdelwahabmalak75@gmail.com / (347) 832-7759',status:'reengage',notes:'Quoted, no response',last:'Mar 2',obj:'ghost',pipe:'wix'},
+{id:'w16',name:'Manisha Parmar',date:'Sep 24',venue:"Lenard's Palazzo",guests:'250',food:'Bubble Tea',value:'TBD',contact:'mparmar1102@gmail.com / (347) 283-6998',status:'reengage',notes:'No response',last:'Feb 20',obj:'ghost',pipe:'wix'},
+{id:'w17',name:'Sadia Alam',date:'Jun 6',venue:'Hutton Brickyards Kingston',guests:'200',food:'Bubble Tea',value:'TBD',contact:'ishaadia2026@gmail.com / (347) 788-9643',status:'reengage',notes:'Call preferred',last:'Feb 8',obj:'ghost',pipe:'wix'},
+{id:'w18',name:'Sweem Khan',date:'Aug 7',venue:'Royal Palm',guests:'400',food:'Bubble Tea',value:'TBD',contact:'khansweem@gmail.com / (347) 607-7862',status:'reengage',notes:'400 guests — call not text',last:'Jan 31',obj:'ghost',pipe:'wix'},
+{id:'w19',name:'Dutee Ahamed',date:'Jul 31',venue:'Swan Club Roslyn LI',guests:'300',food:'Boba + Fuchka + Pani + Falooda + Charcuterie',value:'TBD',contact:'duteeahamed@gmail.com / (347) 722-0037',status:'reengage',notes:'Quoted',last:'Feb 13',obj:'ghost',pipe:'wix'},
+{id:'w20',name:'Shelly Landrau',date:'Jul 6',venue:'Larkfield Manor LI',guests:'105',food:'Bubble Tea',value:'TBD',contact:'shellylandrau@gmail.com',status:'reengage',notes:'Email only',last:'Jan 31',obj:'ghost',pipe:'wix'},
+{id:'w21',name:'Saima Sarwar',date:'Jun 28',venue:'Johnsonville NY',guests:'200',food:'Bubble Tea',value:'TBD',contact:'WRONG EMAIL ON FILE',status:'reengage',notes:'Wrong email — find correct contact first',last:'Feb 9',obj:'ghost',pipe:'wix'},
+{id:'w22',name:'Suparna Saha',date:'Jul 10',venue:'DoubleTree Fairfield NJ',guests:'150',food:'Boba + Fuchka + Bhel',value:'TBD',contact:'suparna.saha11@gmail.com / (347) 707-8618',status:'reengage',notes:'',last:'Feb 6',obj:'ghost',pipe:'wix'},
+{id:'w23',name:'Foujia Uddin',date:'Jul 26',venue:'Imperial House MI',guests:'500',food:'Bubble Tea',value:'TBD',contact:'uddinfoujia@gmail.com / (313) 288-4817',status:'reengage',notes:'500 guests, long gap',last:'Nov 11 2025',obj:'ghost',pipe:'wix'},
+{id:'w24',name:'Abida Kabir',date:'May 15',venue:'Joya Hall',guests:'150',food:'Bhel Puri',value:'TBD',contact:'akabir9339@bths.edu / (347) 679-9638',status:'reengage',notes:'',last:'Dec 21 2025',obj:'ghost',pipe:'wix'},
+{id:'w25',name:'Natasha Bhatti',date:'May 21',venue:'Albany Airport Inn',guests:'100',food:'Falooda + Boba',value:'TBD',contact:'tasha01000@yahoo.com / (518) 530-0242',status:'reengage',notes:'Quoted',last:'Mar 11',obj:'ghost',pipe:'wix'},
+{id:'w26',name:'Tangina Uddin',date:'Jul 12',venue:'Admiral Room Buffalo NY',guests:'120',food:'Bubble Tea',value:'TBD',contact:'tu11897@gmail.com / (716) 507-0279',status:'reengage',notes:'Quoted',last:'Feb 26',obj:'ghost',pipe:'wix'},
+{id:'w27',name:'Serena',date:'Jun 6',venue:'At home',guests:'300',food:'Boba + Ice Cream',value:'TBD',contact:'devinaluckhoo02@gmail.com / (518) 878-9238',status:'reengage',notes:'300 guests',last:'Mar 11',obj:'ghost',pipe:'wix'},
+{id:'w28',name:'Himani Patel',date:'Jun 7',venue:'Piscataway NJ',guests:'200',food:'Bhel Puri',value:'TBD',contact:'patel8hims@gmail.com / (732) 273-5136',status:'reengage',notes:'Long gap',last:'Dec 21 2025',obj:'ghost',pipe:'wix'},
+{id:'w29',name:'Cassidy Hamilton',date:'Aug 29',venue:'Mercury Store Brooklyn',guests:'125',food:'Boba + Charcuterie + Ice Cream',value:'TBD',contact:'cassidywescotthamilton@gmail.com / (443) 883-0077',status:'reengage',notes:'Finalizing budget',last:'Mar 13',obj:'budget',pipe:'wix'},
+{id:'w30',name:'Amnah Chaudhry',date:'Aug 28',venue:'Falls Creek Farm',guests:'125',food:'Boba + Fuchka + Pani + Charcuterie',value:'TBD',contact:'amnahhadi7@gmail.com / (860) 796-9433',status:'reengage',notes:'',last:'Dec 22 2025',obj:'ghost',pipe:'wix'},
+{id:'w31',name:'Asma Rizwan',date:'Jul 31',venue:'TBD Long Island',guests:'400',food:'Boba + Ice Cream + Falooda',value:'TBD',contact:'fmzs121@gmail.com',status:'reengage',notes:'400 guests',last:'Mar 5',obj:'ghost',pipe:'wix'},
+{id:'w32',name:'Pritu Saha',date:'Jun 18',venue:'Joya Hall Queens',guests:'250',food:'Boba + Fuchka + Bhel',value:'TBD',contact:'pritusaha395@gmail.com',status:'reengage',notes:'Date updated to Jun 18',last:'Mar 5',obj:'ghost',pipe:'wix'},
+{id:'w33',name:'Gurjit Kaur',date:'Jul 12',venue:'Five Star Banquet',guests:'200',food:'Boba + Ice Cream',value:'TBD',contact:'kaurgurjit360@gmail.com',status:'clarify',notes:'Texted, no response',last:'',obj:'ghost',pipe:'wix'},
+{id:'w34',name:'Zarin Diana',date:'Aug 4',venue:'Jamaica NY (Holud)',guests:'120',food:'Boba + Fuchka + Falooda + Bhel',value:'TBD',contact:'zarindiana4@gmail.com / (929) 300-9015',status:'clarify',notes:'First text sent today',last:'Today',obj:'ghost',pipe:'wix'},
+{id:'w35',name:'Sabira Haque',date:'Jul 30',venue:'Honey Brook PA',guests:'150',food:'Boba + Fuchka + Pani + Falooda + more',value:'TBD',contact:'sabirahaqueanwar@gmail.com / (610) 787-4044',status:'clarify',notes:'Multiple FUs no response — consider breakup text',last:'Feb 17',obj:'ghost',pipe:'wix'},
+{id:'w36',name:'Priya Kaur',date:'May 29',venue:'Pearl Hicksville',guests:'200',food:'Boba + Falooda + Ice Cream',value:'TBD',contact:'kaurpriyajeet@gmail.com / (616) 329-1906',status:'clarify',notes:'Quoted, followed up today',last:'Today',obj:'ghost',pipe:'wix'},
+{id:'w37',name:'Suchetna Vaid',date:'Oct 22',venue:'Cotillion Hicksville',guests:'125',food:'Bubble Tea',value:'TBD',contact:'vaidsuchetna@gmail.com / (929) 393-1382',status:'clarify',notes:'Quoted, followed up today',last:'Today',obj:'ghost',pipe:'wix'},
+{id:'w38',name:'Bev Sainteme',date:'Sep 17',venue:'Watermill Caterers Smithtown',guests:'110',food:'Boba + Charcuterie',value:'TBD',contact:'bervellysainteme@gmail.com / (516) 234-2922',status:'clarify',notes:'Multiple FUs no response',last:'',obj:'ghost',pipe:'wix'},
+{id:'w39',name:'Alina Moeen',date:'Jun 19',venue:'Hilton Universal City LA',guests:'350',food:'Boba + Falooda + Ice Cream',value:'TBD',contact:'',status:'oos',notes:'CA',last:'',obj:'',pipe:'wix'},
+{id:'w40',name:'Azeem Dhukani',date:'Sep 5',venue:'Houston TX',guests:'500',food:'Boba + Pani + Bhel + Falooda',value:'TBD',contact:'',status:'oos',notes:'TX — price conscious',last:'',obj:'budget',pipe:'wix'},
+{id:'w41',name:'Divya Khandke',date:'Jun 20',venue:'Bluemont VA',guests:'200',food:'Bubble Tea',value:'TBD',contact:'',status:'oos',notes:'VA',last:'',obj:'',pipe:'wix'},
+{id:'w42',name:'Fareeha Sultan',date:'Oct 18',venue:'Millwick CA',guests:'200',food:'Bubble Tea',value:'TBD',contact:'',status:'oos',notes:'CA',last:'',obj:'',pipe:'wix'},
+{id:'w43',name:'Hiba Naveed',date:'May 17',venue:'Michigan',guests:'200',food:'Pani Puri + Bhel + Boba',value:'TBD',contact:'',status:'oos',notes:'MI',last:'',obj:'',pipe:'wix'},
+{id:'w44',name:'Mehjabeen',date:'Sep 3',venue:'Bel Air VA',guests:'250',food:'Boba + Falooda + Pani Puri',value:'TBD',contact:'',status:'oos',notes:'VA, quoted',last:'',obj:'ghost',pipe:'wix'},
+{id:'w45',name:'Devangi',date:'Jun 30',venue:'Moundsville WV',guests:'200',food:'Bubble Tea',value:'TBD',contact:'',status:'oos',notes:'WV',last:'',obj:'',pipe:'wix'},
+{id:'w46',name:'Kunal Patel',date:'Dec 12',venue:'Cerritos CA',guests:'150',food:'Boba + Pani + Bhel',value:'TBD',contact:'',status:'oos',notes:'CA',last:'',obj:'',pipe:'wix'},
+{id:'w47',name:'Sumathi Arumugam',date:'Apr 19',venue:'Princeton Junction NJ',guests:'100',food:'Boba + Pani Puri + Falooda',value:'TBD',contact:'',status:'closed',notes:'Jotform Feb 24',last:'',obj:'',pipe:'wix'},
+{id:'w48',name:"St. John's University BSA",date:'Apr 10',venue:'Queens Campus',guests:'150',food:'Boba + Falooda + Ice Cream',value:'TBD',contact:'',status:'closed',notes:'Invoice sent Mar 5',last:'',obj:'',pipe:'wix'},
+{id:'w49',name:'Sadia Malik',date:'Jul 31',venue:'Wading River NY',guests:'200',food:'Boba',value:'$1,300',contact:'',status:'closed',notes:'Jotform Feb 28',last:'',obj:'',pipe:'wix'},
+{id:'w50',name:'Israt Motaleb',date:'Aug 10',venue:'Long Island City NY',guests:'200',food:'Boba',value:'$1,000',contact:'',status:'closed',notes:'Jotform Feb 20',last:'',obj:'',pipe:'wix'},
+{id:'w51',name:'Trisa Chakraborty',date:'Sep 19',venue:'Martinsville Gardens NJ',guests:'TBD',food:'TBD',value:'$2,400',contact:'',status:'closed',notes:'Jotform Jan 21',last:'',obj:'',pipe:'wix'},
+{id:'w52',name:'Jill Diwankatera',date:'Oct 17',venue:'Pearl River NY',guests:'TBD',food:'TBD',value:'$1,000',contact:'',status:'closed',notes:'Jotform Jan 20',last:'',obj:'',pipe:'wix'},
+{id:'w53',name:'Bakhtaawar Wahla',date:'Jun 6',venue:'Obsession Banquet Hall',guests:'175',food:'Boba + Falooda',value:'TBD',contact:'',status:'lost',notes:'Rejected',last:'',obj:'',pipe:'wix'},
+{id:'w54',name:'Samiha Hossain',date:'Jun 14',venue:"World's Fair Marina",guests:'250',food:'Bubble Tea',value:'TBD',contact:'',status:'lost',notes:'Lost',last:'',obj:'',pipe:'wix'},
+{id:'w55',name:'Foujia',handle:'@fouziaxo',date:'Apr 18',venue:'Aashiward Palace NJ',guests:'200',food:'Boba + Falooda',value:'$2,100',contact:'',status:'lost',notes:'Not interested',last:'',obj:'',pipe:'wix'}
+],
+corp:[
+// ── STUDENT ORGS ──
+{id:'c1',name:'Baruch SASA',handle:'',date:'Apr 17, 2026',venue:'Baruch College, 55 Lexington Ave, New York NY',guests:'TBD',food:'TBD',value:'$1,800',contact:'',status:'hot',notes:'Proposal + quote sent. Apr 17 is close — follow up now. Student org event.',last:'',obj:'',pipe:'corp',orgtype:'student',org:'Baruch College'},
+{id:'c2',name:'SJU BSA (St. Johns University)',handle:'',date:'Apr 10, 2026',venue:'Queens Campus, St. Johns University',guests:'150',food:'Boba + Falooda + Ice Cream',value:'TBD',contact:'stjohnsbsa@gmail.com',status:'hot',notes:'Invoice sent Mar 5. No response yet. Follow up on payment.',last:'Mar 5',obj:'ghost',pipe:'corp',orgtype:'student',org:'St. Johns University'},
+{id:'c3',name:'Fordham University — Garv Baid',handle:'',date:'Mar 28, 2026',venue:'Fordham University, Bronx NY',guests:'600',food:'Pani Puri + Bhel Puri + Falooda',value:'TBD',contact:'gbaid@fordham.edu',status:'hot',notes:'600 servings. Invoice + COI sent. Payment requested via check to Sip N Snack. Awaiting payment.',last:'Mar 3',obj:'ghost',pipe:'corp',orgtype:'student',org:'Fordham University'},
+{id:'c4',name:'Stony Brook Bengalis Unite',handle:'',date:'TBD',venue:'Stony Brook University',guests:'TBD',food:'TBD',contact:'stonybrookbengalisunite@gmail.com',value:'TBD',status:'pending',notes:'Vendor registration in progress. W9 + COI + references submitted. Waiting on approval from Mahdi.',last:'Mar 14',obj:'ghost',pipe:'corp',orgtype:'student',org:'Stony Brook University'},
+{id:'c5',name:'Rutgers APRU Spring Formal',handle:'',date:'TBD',venue:'Rutgers University, NJ',guests:'TBD',food:'TBD',contact:'associationofpunjabis@gmail.com',value:'TBD',status:'pending',notes:'Vendor approval docs submitted (W9, COI, license, menu). Waiting on Veronica.',last:'Mar 4',obj:'ghost',pipe:'corp',orgtype:'student',org:'Rutgers University'},
+{id:'c6',name:'Binghamton University — Jasmin Kaur',handle:'',date:'Mar 22, 2026',venue:'4400 Vestal Pkwy, Binghamton NY',guests:'TBD',food:'TBD',value:'$2,000',contact:'jaskaur2004@gmail.com',status:'closed',notes:'Contracted Jan 13. Jotform signed.',last:'',obj:'',pipe:'corp',orgtype:'student',org:'Binghamton University'},
+// ── CORPORATE ──
+{id:'c7',name:'Joshua Rodriguez',handle:'',date:'May 24, 2026',venue:'NYC Networking Event',guests:'530',food:'Bubble Tea',value:'TBD',contact:'',status:'hot',notes:'Re-engaged via text + call. 530 guests. Quote ASAP — biggest lead in pipeline.',last:'Today',obj:'ghost',pipe:'corp',orgtype:'corporate',org:'TBD'},
+{id:'c8',name:'Eric Taylor — Amazon NYC',handle:'',date:'Apr 24, 2026',venue:'Amazon NYC HQ',guests:'250',food:'Bubble Tea',value:'TBD',contact:'',status:'hot',notes:'Re-engaged via text + call. Corporate event at Amazon NYC.',last:'Today',obj:'ghost',pipe:'corp',orgtype:'corporate',org:'Amazon'},
+{id:'c9',name:'South Asian & Indo-Caribbean Democratic Club',handle:'',date:'Mar 27, 2026',venue:'Guy R. Brewer United Democratic Club, Jamaica NY',guests:'TBD',food:'TBD',value:'TBD',contact:'',status:'closed',notes:'HoneyBook contracted. Event today.',last:'Mar 19',obj:'',pipe:'corp',orgtype:'civic',org:'South Asian & Indo-Caribbean Democratic Club'}
+]};
+
+// ─── STATE ─────────────────────────────────────────────────────────────────────
+let D={ig:[],wix:[],corp:[]},editId=null,filters={ig:'all',wix:'all',corp:'all'},searches={ig:'',wix:'',corp:''},analyticsYr='2026',evYr='2026',selSeqLead=null;
+let CH={};
+
+const SC={urgent:{l:'URGENT',t:'tr',c:'curg'},hot:{l:'HOT',t:'ta',c:'chot'},pending:{l:'PENDING',t:'tb',c:''},nurture:{l:'NURTURE',t:'tg',c:''},reengage:{l:'RE-ENGAGE',t:'ta',c:''},clarify:{l:'CLARIFY',t:'tx_',c:''},oos:{l:'OOS',t:'tr',c:''},closed:{l:'CLOSED',t:'tg',c:'cwon'},lost:{l:'LOST',t:'tr',c:''}};
+const PO={ig:['urgent','hot','pending','clarify','nurture','closed','lost'],wix:['hot','urgent','reengage','clarify','oos','closed','lost'],corp:['hot','pending','clarify','nurture','closed','lost']};
+const SLB={urgent:'URGENT — CLOSE NOW',hot:'HOT LEADS',pending:'PENDING CLOSE',nurture:'NURTURE / FOLLOW LATER',reengage:'RE-ENGAGE — QUOTED, NO RESPONSE',clarify:'CLARIFY STAGE',clarify:'CLARIFY STAGE',oos:'OUT OF STATE',closed:'CLOSED / WON',lost:'LOST / REJECTED'};
+
+function load(){try{const s=localStorage.getItem('alfred_v5');if(s){
+    D=JSON.parse(s);
+    // Ensure corp array exists (backward compat)
+    if(!D.corp) D.corp=JSON.parse(JSON.stringify(DEF.corp));
+  }else{D=JSON.parse(JSON.stringify(DEF));save();}}catch{D=JSON.parse(JSON.stringify(DEF));}}
+function save(){localStorage.setItem('alfred_v5',JSON.stringify(D));}
+function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
+
+// ─── THEME ─────────────────────────────────────────────────────────────────────
+function toggleTheme(){
+  const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';
+  h.setAttribute('data-theme',d?'light':'dark');
+  document.getElementById('tlbl').textContent=d?'DARK KNIGHT':'WHITE RAVEN';
+  localStorage.setItem('alfred_theme',d?'light':'dark');
+  rebuildCharts();
+}
+function loadTheme(){
+  const t=localStorage.getItem('alfred_theme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('tlbl').textContent=t==='dark'?'WHITE RAVEN':'DARK KNIGHT';
+}
+
+// ─── CLOCK & TICKER ────────────────────────────────────────────────────────────
+function tickClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false,timeZone:'America/New_York'})+' EST';}
+setInterval(tickClock,1000);tickClock();
+
+function buildTicker(){
+  const all=[...D.ig,...D.wix,...D.corp];
+  const active=all.filter(x=>!['closed','lost'].includes(x.status)).length;
+  const items=[
+    {s:'SIP.2026',v:'$28.1K+ contracted',chg:'28 signed contracts',up:true},
+    {s:'CLOSE.2025',v:'18.7%',chg:'45/241 inquiries',up:true},
+    {s:'CLOSE.2026',v:'12.5% YTD',chg:'17/136 — needs work',up:false},
+    {s:'AOV.2026',v:'$1,652',chg:'valued contracts',up:true},
+    {s:'PIPELINE',v:active+' active',chg:'leads in CRM',up:true},
+    {s:'DEP.OUTSTANDING',v:'~$14K+',chg:'to collect 2026',up:true},
+    {s:'ABHINAV.BASSI',v:'$1,200',chg:'due day before Aug 14',up:true},
+    {s:'FARAH.KHALID',v:'$1,000 paid',chg:'balance still owed',up:true},
+    {s:'PEMA',v:'Mar 28 Queens',chg:'CLOSE TODAY',up:false},
+    {s:'POOJA.PATEL',v:'$1,600 · 300g',chg:'hottest IG lead',up:true},
+    {s:'RA.ALI',v:'~$2,400 · 450g',chg:'budget obj stalled',up:false},
+    {s:'FORDHAM.HOLI',v:'600 servings',chg:'Garv Baid · invoice sent',up:true},
+    {s:'2027.BOOKED',v:'Justine Nardone',chg:'May 7 · already signed',up:true},
+  ];
+  const html=items.map(x=>`<span class="ti"><span class="ts">${x.s}</span> <span class="tv">${x.v}</span><span class="${x.up?'tup':'tdn'}">${x.up?'▲':'▼'} ${x.chg}</span></span>`).join('');
+  document.getElementById('ticker').innerHTML=html+html;
+}
+
+// ─── NAV ───────────────────────────────────────────────────────────────────────
+function nav(pg,el){
+  document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('on'));el.classList.add('on');
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  document.getElementById('pg-'+pg).classList.add('on');
+  document.getElementById('scroll').scrollTop=0;
+  if(pg==='dash')buildDash();
+  if(pg==='analytics')buildAnalytics();
+  if(pg==='events')buildEvents();
+  if(pg==='deposits')buildDeposits();
+  if(pg==='seq')buildSeq();
+  if(pg==='corp'){renderPipe('corp');renderCorpType('all');}
+}
+
+// ─── COLOR HELPER ──────────────────────────────────────────────────────────────
+function CC(){
+  const d=document.documentElement.getAttribute('data-theme')==='dark';
+  return{acc:d?'#00e87a':'#006d35',am:d?'#f0a500':'#b87000',rd:d?'#f03c3c':'#cc2222',bl:d?'#3ab4f5':'#0066aa',grid:d?'rgba(30,48,34,.45)':'rgba(180,201,183,.4)',tx:d?'#7aaa88':'#325c38',bg:d?'#0c160e':'#fff'};
+}
+function dCH(id){if(CH[id]){CH[id].destroy();delete CH[id];}}
+function cOpts(c,extra){
+  extra=extra||{};
+  const base={responsive:true,animation:{duration:600},plugins:{legend:{labels:{color:c.tx,font:{size:9,family:'IBM Plex Mono'},boxWidth:10}}},scales:{x:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}},y:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}}}};
+  if(extra.plugins){Object.keys(extra.plugins).forEach(k=>{base.plugins[k]=extra.plugins[k];});}
+  if(extra.scales){Object.keys(extra.scales).forEach(k=>{base.scales[k]=extra.scales[k];});}
+  if(extra.indexAxis)base.indexAxis=extra.indexAxis;
+  return base;
+}
+
+// ─── DASHBOARD ─────────────────────────────────────────────────────────────────
+function buildDash(){
+  const all=[...D.ig,...D.wix,...D.corp];
+  const active=all.filter(x=>!['closed','lost'].includes(x.status));
+  const won=all.filter(x=>x.status==='closed');
+  const hot=all.filter(x=>['urgent','hot'].includes(x.status));
+  document.getElementById('k-active').textContent=active.length;
+  document.getElementById('k-sub').textContent=`${D.ig.filter(x=>!['closed','lost'].includes(x.status)).length} IG + ${D.wix.filter(x=>!['closed','lost'].includes(x.status)).length} Wix`;
+  document.getElementById('k-won').textContent=won.length;
+  document.getElementById('k-wons').textContent=`${all.filter(x=>x.status==='lost').length} lost this cycle`;
+  document.getElementById('k-hot').textContent=hot.length;
+
+  document.getElementById('flow').innerHTML=[
+    {l:'Urgent/Hot',n:hot.length},{l:'Pending',n:all.filter(x=>x.status==='pending').length},
+    {l:'Nurture',n:all.filter(x=>x.status==='nurture').length},{l:'Re-Engage',n:all.filter(x=>x.status==='reengage').length},
+    {l:'Closed',n:won.length},
+  ].map(s=>`<div class="fs"><div class="fn">${s.n}</div><div class="fl">${s.l}</div></div>`).join('');
+
+  const whales=all.filter(x=>{const m=x.value.match(/\$?([\d,]+)/);return m&&parseInt(m[1].replace(/,/g,''))>=2000&&x.status!=='lost';}).sort((a,b)=>{const av=parseInt((a.value.match(/\$?([\d,]+)/)||[0,'0'])[1].replace(/,/g,''));const bv=parseInt((b.value.match(/\$?([\d,]+)/)||[0,'0'])[1].replace(/,/g,''));return bv-av;}).slice(0,5);
+  document.getElementById('whales').innerHTML=whales.map(w=>`<div class="whale"><div><div class="wn">${w.name}</div><div class="wm">${w.guests} guests · ${w.date}</div></div><div class="wv">${w.value}</div></div>`).join('');
+
+  const al=[];
+  if(all.find(x=>x.name==='Pema'))al.push({t:'ar',i:'⚡',h:'Pema — Mar 28 Queens',s:'Close TODAY or lose the date'});
+  if(hot.length)al.push({t:'ar',i:'🔥',h:`${hot.length} HOT leads — follow up now`,s:hot.slice(0,3).map(x=>x.name).join(', ')+(hot.length>3?'...':'')});
+  if(all.find(x=>x.name==='Saima Sarwar'))al.push({t:'ar',i:'⚠',h:'Saima Sarwar — wrong email on file',s:'Find correct contact before outreach'});
+  al.push({t:'aa',i:'💰',h:'Abhinav Bassi — $1,200 balance due Aug 14',s:'Paying day before event — track this'});
+  al.push({t:'aa',i:'📅',h:'Jun 21 cluster — 2 contracts same day in NJ',s:'Rukhma Umer + Amrit Singh — confirm staffing'});
+  al.push({t:'ag',i:'🏢',h:'Fordham Holi (Garv Baid) — invoice sent, awaiting payment',s:'600 servings · Pani Puri + Bhel + Falooda'});
+  document.getElementById('alerts').innerHTML=al.map(a=>`<div class="aler ${a.t}"><div class="ai">${a.i}</div><div><div class="ah">${a.h}</div><div class="as">${a.s}</div></div></div>`).join('');
+
+  const c=CC();
+  const statuses=['hot','urgent','pending','nurture','reengage','clarify'];
+  const sl={hot:'HOT',urgent:'URGENT',pending:'PENDING',nurture:'NURTURE',reengage:'RE-ENGAGE',clarify:'CLARIFY'};
+  const sc={hot:c.am,urgent:c.rd,pending:c.bl,nurture:c.acc,reengage:c.am,clarify:c.tx};
+  const maxN=Math.max(...statuses.map(s=>all.filter(x=>x.status===s).length),1);
+  document.getElementById('bar-st').innerHTML=statuses.map(s=>{const n=all.filter(x=>x.status===s).length;return `<div class="mb-row"><div class="mb-l">${sl[s]}</div><div class="mb-t"><div class="mb-f" style="width:${Math.round(n/maxN*100)}%;background:${sc[s]}"></div></div><div class="mb-n">${n}</div></div>`;}).join('');
+
+  dCH('rev');
+  const oc={responsive:true,animation:{duration:600},plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}},y:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'},callback:v=>'$'+v.toLocaleString()},grid:{color:c.grid}}}};
+  CH['rev']=new Chart(document.getElementById('rev-c').getContext('2d'),{type:'bar',data:{labels:MOS,datasets:[{data:REV26,backgroundColor:REV26.map(v=>v===Math.max(...REV26)?c.am+'aa':c.acc+'55'),borderColor:REV26.map(v=>v===Math.max(...REV26)?c.am:c.acc),borderWidth:1,borderRadius:2}]},options:oc});
+  updateMeta();
+}
+
+// ─── ANALYTICS ─────────────────────────────────────────────────────────────────
+function setYr(yr,el){
+  analyticsYr=yr;document.querySelectorAll('#ytog .yb').forEach(b=>b.classList.remove('on'));el.classList.add('on');buildAnalytics();
+}
+function buildAnalytics(){
+  const c=CC();const y=analyticsYr;
+  let inq=0,bk=0;
+  if(y==='2025'){inq=241;bk=45;}else if(y==='2026'){inq=136;bk=17;}else{inq=377;bk=62;}
+  const cr=(bk/inq*100).toFixed(1)+'%';
+  const aov=y==='2025'?'~$1,200':y==='2026'?'$1,652':'$1,400+';
+  document.getElementById('an-kpis').innerHTML=`
+    <div class="kpi"><div class="kv">${inq}</div><div class="kl">Total Inquiries</div><div class="ks">${y==='both'?'2025+2026 combined':'Wix form submissions'}</div></div>
+    <div class="kpi bl"><div class="kv">${cr}</div><div class="kl">Close Rate</div><div class="ks">${bk} booked of ${inq}</div></div>
+    <div class="kpi am"><div class="kv">${aov}</div><div class="kl">Avg Order Value</div><div class="ks">from signed contracts</div></div>
+    <div class="kpi"><div class="kv">143</div><div class="kl">Avg Guest Count</div><div class="ks">median 120 · range 1-530</div></div>`;
+
+  // INQUIRIES + CLOSES — combo chart
+  dCH('inq-close');
+  const icDs=[];
+  if(y==='2025'||y==='both'){
+    icDs.push({type:'bar',label:'2025 Inquiries',data:M25.inq,backgroundColor:c.acc+'44',borderColor:c.acc,borderWidth:1,borderRadius:2,yAxisID:'y'});
+    icDs.push({type:'bar',label:'2025 Closed',data:M25.bk,backgroundColor:c.acc+'cc',borderColor:c.acc,borderWidth:1,borderRadius:2,yAxisID:'y'});
+  }
+  if(y==='2026'||y==='both'){
+    icDs.push({type:'bar',label:'2026 Inquiries',data:M26.inq,backgroundColor:c.am+'44',borderColor:c.am,borderWidth:1,borderRadius:2,yAxisID:'y'});
+    icDs.push({type:'bar',label:'2026 Closed',data:M26.bk,backgroundColor:c.am+'cc',borderColor:c.am,borderWidth:1,borderRadius:2,yAxisID:'y'});
+  }
+  // Close rate line overlay
+  if(y!=='both'){
+    const data=y==='2025'?M25:M26;
+    icDs.push({type:'line',label:`${y} Close Rate %`,data:data.inq.map((inq,i)=>inq?+(data.bk[i]/inq*100).toFixed(1):0),borderColor:c.rd,backgroundColor:'transparent',tension:.3,pointBackgroundColor:c.rd,borderWidth:2,pointRadius:3,yAxisID:'y2'});
+  }
+  CH['inq-close']=new Chart(document.getElementById('inq-close-c').getContext('2d'),{type:'bar',data:{labels:MOS,datasets:icDs},options:{responsive:true,animation:{duration:600},plugins:{legend:{labels:{color:c.tx,font:{size:9,family:'IBM Plex Mono'},boxWidth:10}}},scales:{x:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}},y:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid},position:'left'},y2:{ticks:{color:c.rd,font:{size:9,family:'IBM Plex Mono'},callback:v=>v+'%'},grid:{display:false},position:'right'}}}});
+
+  // Close rate line only
+  dCH('close');
+  const crDs=[];
+  if(y==='2025'||y==='both') crDs.push({label:'2025 Close %',data:M25.inq.map((inq,i)=>inq?+(M25.bk[i]/inq*100).toFixed(1):0),borderColor:c.acc,backgroundColor:c.acc+'18',tension:.3,pointBackgroundColor:c.acc,borderWidth:2,pointRadius:3});
+  if(y==='2026'||y==='both') crDs.push({label:'2026 Close %',data:M26.inq.map((inq,i)=>inq?+(M26.bk[i]/inq*100).toFixed(1):0),borderColor:c.am,backgroundColor:c.am+'18',tension:.3,pointBackgroundColor:c.am,borderWidth:2,pointRadius:3,borderDash:y==='both'?[4,2]:undefined});
+  CH['close']=new Chart(document.getElementById('close-c').getContext('2d'),{type:'line',data:{labels:MOS,datasets:crDs},options:{responsive:true,animation:{duration:600},plugins:{legend:{labels:{color:c.tx,font:{size:9,family:'IBM Plex Mono'},boxWidth:10}}},scales:{x:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}},y:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'},callback:v=>v+'%'},grid:{color:c.grid}}}}});
+
+  dCH('rev2');
+  const rco={responsive:true,animation:{duration:600},plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}},y:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'},callback:v=>'$'+v.toLocaleString()},grid:{color:c.grid}}}};
+  CH['rev2']=new Chart(document.getElementById('rev2-c').getContext('2d'),{type:'bar',data:{labels:MOS,datasets:[{data:REV26,backgroundColor:REV26.map(v=>v===Math.max(...REV26)?c.am+'aa':c.acc+'55'),borderColor:REV26.map(v=>v===Math.max(...REV26)?c.am:c.acc),borderWidth:1,borderRadius:2}]},options:rco});
+
+  dCH('guest');
+  CH['guest']=new Chart(document.getElementById('guest-c').getContext('2d'),{type:'doughnut',data:{labels:['Under 50','50-100','100-200','200-300','300+'],datasets:[{data:[39,146,146,54,21],backgroundColor:[c.tx+'55',c.bl+'88',c.acc+'88',c.am+'88',c.rd+'88'],borderColor:[c.tx,c.bl,c.acc,c.am,c.rd],borderWidth:1}]},options:{responsive:true,animation:{duration:600},plugins:{legend:{labels:{color:c.tx,font:{size:9,family:'IBM Plex Mono'},boxWidth:10}}}}});
+
+  const menu=[{l:'Bubble Tea only',n:191},{l:'Boba + Fuchka',n:18},{l:'Boba + Falooda',n:12},{l:'Boba + Ice Cream',n:14},{l:'Boba + Charcuterie',n:7},{l:'Fuchka + Bhel',n:10},{l:'Pani Puri',n:6}];
+  const maxM=Math.max(...menu.map(x=>x.n));
+  document.getElementById('menu-bars').innerHTML=menu.map(m=>`<div class="mb-row"><div class="mb-l" style="width:120px;font-size:8px">${m.l}</div><div class="mb-t"><div class="mb-f" style="width:${Math.round(m.n/maxM*100)}%;background:${c.acc}"></div></div><div class="mb-n">${m.n}</div></div>`).join('');
+
+  dCH('event');
+  CH['event']=new Chart(document.getElementById('event-c').getContext('2d'),{type:'bar',data:{labels:['Wedding','Mehendi/Mehndi','Nikkah','Reception','Birthday','Engagement','Sangeet','Holud','Bridal Shower','Baby Shower'],datasets:[{data:[68,28,14,15,11,10,9,8,8,15],backgroundColor:c.acc+'66',borderColor:c.acc,borderWidth:1,borderRadius:2}]},options:{responsive:true,animation:{duration:600},plugins:{legend:{display:false}},scales:{x:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}},y:{ticks:{color:c.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:c.grid}}},indexAxis:'y'}});
+}
+
+// ─── BOOKED EVENTS ─────────────────────────────────────────────────────────────
+function setEvYr(yr,el){evYr=yr;document.querySelectorAll('#ev-ytog .yb').forEach(b=>b.classList.remove('on'));el.classList.add('on');buildEvents();}
+function buildEvents(){
+  const f=evYr==='all'?EVENTS:EVENTS.filter(e=>e.yr===parseInt(evYr));
+  const sorted=[...f].sort((a,b)=>a.mo-b.mo);
+  document.getElementById('ev-cards').innerHTML=sorted.map(e=>{
+    const cls=e.yr===2027?'ec-bl':e.yr===2025?'ec-am':e.val?'':'ec-no';
+    const dtCol=e.yr===2027?'color:var(--bl)':e.yr===2025?'color:var(--am)':'';
+    return `<div class="ecal ${cls}">
+      <div class="ec-dt" style="${dtCol}">${e.dt}</div>
+      <div class="ec-n">${e.n}</div>
+      <div class="ec-v">${e.v}</div>
+      ${e.val?`<div class="ec-val">$${e.val.toLocaleString()} <span style="color:var(--tx3);font-size:8px">dep $${(e.dep||0).toLocaleString()}</span></div>`:'<div style="color:var(--tx3);font-size:9px;margin-top:3px">value not on file</div>'}
+      ${e.note?`<div style="font-size:9px;color:var(--am);margin-top:3px;padding:2px 6px;background:var(--amdim);border-left:2px solid var(--am)">${e.note}</div>`:''}
+      <div class="ec-src">${e.src}${e.type?' · '+e.type:''}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('nb-ev').textContent=f.length;
+}
+
+// ─── DEPOSIT TRACKER ───────────────────────────────────────────────────────────
+function buildDeposits(){
+  const ev2026=EVENTS.filter(e=>e.yr===2026&&e.val);
+  let totalVal=0,totalPaid=0,totalBal=0,noVal=EVENTS.filter(e=>e.yr===2026&&!e.val).length;
+  ev2026.forEach(e=>{
+    const bal=(e.val||0)-(e.paid||0);
+    totalVal+=e.val||0;totalPaid+=e.paid||0;totalBal+=bal;
+  });
+  document.getElementById('dep-total-v').textContent='$'+totalVal.toLocaleString();
+  document.getElementById('dep-paid-v').textContent='$'+totalPaid.toLocaleString();
+  document.getElementById('dep-bal-v').textContent='$'+totalBal.toLocaleString();
+  document.getElementById('dep-unknown-v').textContent=noVal;
+  document.getElementById('sm-dep-bal').textContent='$'+totalBal.toLocaleString();
+
+  // Sort by event date
+  const sorted=[...ev2026].sort((a,b)=>a.mo-b.mo);
+  document.getElementById('dep-rows').innerHTML=sorted.map(e=>{
+    const bal=(e.val||0)-(e.paid||0);
+    const pct=e.val?Math.round((e.paid||0)/e.val*100):0;
+    let statusLabel,statusClass;
+    if(bal===0){statusLabel='PAID';statusClass='paid';}
+    else if((e.paid||0)>0){statusLabel='PARTIAL';statusClass='partial';}
+    else{statusLabel='DUE';statusClass='due';}
+    const balCol=bal===0?'green':bal<500?'amber':'red';
+    return `<div class="dep-row">
+      <div><div class="dep-name">${e.n}</div>${e.note?`<div style="font-size:9px;color:var(--am)">${e.note}</div>`:''}</div>
+      <div class="dep-date">${e.dt}</div>
+      <div class="dep-total">$${(e.val||0).toLocaleString()}</div>
+      <div class="dep-paid">$${(e.paid||0).toLocaleString()} <span style="font-size:8px;color:var(--tx3)">(${pct}%)</span></div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="dep-bal ${balCol}">${bal===0?'✓':'$'+bal.toLocaleString()}</div>
+        <div class="dep-status ${statusClass}">${statusLabel}</div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('nb-dep').textContent=sorted.length;
+}
+
+// ─── RE-ENGAGEMENT SEQUENCER ────────────────────────────────────────────────────
+function buildSeq(){
+  const all=[...D.ig,...D.wix,...D.corp];
+  const reLeads=all.filter(x=>!['closed','lost'].includes(x.status));
+  document.getElementById('seq-k1').textContent=all.filter(x=>x.status==='reengage').length;
+  document.getElementById('seq-k2').textContent='14+';
+  document.getElementById('seq-k3').textContent=all.filter(x=>x.status==='nurture').length;
+  document.getElementById('seq-k4').textContent=reLeads.length;
+  document.getElementById('nb-seq').textContent=reLeads.length;
+
+  document.getElementById('seq-list').innerHTML=reLeads.map(l=>{
+    const cfg=SC[l.status]||SC.pending;
+    return `<div class="seq-lead-item${selSeqLead&&selSeqLead.id===l.id?' sel':''}" onclick="selectSeqLead('${l.id}','${l.pipe}')">
+      <div class="seq-lead-name">${l.name}</div>
+      <div class="seq-lead-meta">${l.date||'—'} · ${l.guests||'?'} guests</div>
+      <div class="seq-lead-meta">${l.venue||''}</div>
+      <span class="seq-lead-status tag ${cfg.t}">${cfg.l}</span>
+      ${l.obj?`<span class="seq-lead-status tag tb" style="margin-left:3px">${OBJ_LABELS[l.obj]||l.obj}</span>`:''}
+    </div>`;
+  }).join('');
+  if(selSeqLead)renderSeqPanel(selSeqLead);
+}
+
+const OBJ_LABELS={budget:'Budget',spouse:'Spouse/Family',venue:'Venue Approval',vendors:'Main Vendors First',proof:'Proof of Concept',ghost:'Ghosting'};
+
+let activeCorpType='all';
+function filterCorpType(type,el){
+  activeCorpType=type;
+  document.querySelectorAll('[id^="corp-f-"]').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  renderCorpType(type);
+}
+function renderCorpType(type){
+  const con=document.getElementById('corp-body');
+  const f=filters['corp'],s=searches['corp'];
+  let leads=type==='all'?[...D.corp]:D.corp.filter(x=>(x.orgtype||'corporate')===type);
+  if(s) leads=leads.filter(x=>(x.name+x.venue+x.food+x.notes+x.contact+(x.handle||'')+(x.org||'')).toLowerCase().includes(s));
+  const order=PO['corp'];let html='';
+  for(const st of order){
+    if(f!=='all'&&f!==st)continue;
+    const g=leads.filter(x=>x.status===st);if(!g.length)continue;
+    const typeLabel={student:'STUDENT ORG',corporate:'CORPORATE',civic:'CIVIC / COMMUNITY'};
+    html+=`<div class="sh"><div class="sl"></div><div class="st">${SLB[st]||st.toUpperCase()}</div><div class="sn">${g.length}</div><div class="sl"></div></div><div class="g3">`;
+    for(const x of g)html+=corpCardHTML(x);
+    html+='</div>';
+  }
+  if(!html)html='<div style="text-align:center;padding:32px;color:var(--tx3);font-size:9px;font-family:IBM Plex Mono,monospace;letter-spacing:.1em">NO LEADS MATCH FILTER</div>';
+  if(con)con.innerHTML=html;
+}
+function corpCardHTML(c){
+  const cfg=SC[c.status]||SC.pending;
+  const typeColors={student:'var(--bl)',corporate:'var(--am)',civic:'var(--pu,#b06efc)'};
+  const typeBg={student:'var(--bldim)',corporate:'var(--amdim)',civic:'rgba(176,110,252,.1)'};
+  const tc=typeColors[c.orgtype||'corporate'];
+  const tb=typeBg[c.orgtype||'corporate'];
+  return `<div class="card ${cfg.c}" onclick="openEdit('${c.id}','${c.pipe}')">
+    <div class="ct"><span class="cn">${c.name}</span><span class="cd">${c.date||'—'}</span></div>
+    ${c.org?`<div style="font-size:9px;font-weight:600;color:${tc};margin-bottom:2px;font-family:'IBM Plex Mono',monospace;letter-spacing:.04em">${c.org}</div>`:''}
+    ${c.venue?`<div class="cv">${c.guests&&c.guests!='—'?c.guests+' guests · ':''}${c.venue}</div>`:''}
+    ${c.food&&c.food!='—'?`<div class="cs_">${c.food}</div>`:''}
+    ${c.value&&c.value!='TBD'&&c.value!='—'?`<div class="cval">${c.value}</div>`:''}
+    ${c.contact?`<div class="ccon">${c.contact}</div>`:''}
+    ${c.notes?`<div class="cnote">${c.notes}</div>`:''}
+    ${c.last?`<div class="cs_" style="font-style:italic">Last: ${c.last}</div>`:''}
+    <div class="tags">
+      <span class="tag ${cfg.t}">${cfg.l}</span>
+      <span style="font-size:8px;font-weight:600;padding:2px 6px;border-radius:2px;letter-spacing:.08em;text-transform:uppercase;background:${tb};color:${tc};border:1px solid ${tc}44;font-family:'IBM Plex Mono',monospace">${(c.orgtype||'corporate').toUpperCase()}</span>
+      <button class="msg-btn" onclick="event.stopPropagation();openSeqFromCard('${c.id}','${c.pipe}')" title="Generate message">✉</button>
+    </div>
+  </div>`;
+}
+function selectSeqLead(id,pipe){
+  selSeqLead=D[pipe].find(x=>x.id===id);
+  buildSeq();
+}
+function openSeqFromCard(id,pipe){
+  selSeqLead=D[pipe].find(x=>x.id===id);
+  currentTouch=1;
+  // Navigate to seq tab
+  document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('on'));
+  document.querySelector('.sbi[onclick*="seq"]').classList.add('on');
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  document.getElementById('pg-seq').classList.add('on');
+  document.getElementById('scroll').scrollTop=0;
+  buildSeq();
+}
+
+function renderSeqPanel(lead){
+  const panel=document.getElementById('seq-panel');
+  panel.innerHTML=`
+    <div class="seq-lead-detail">
+      <div class="seq-lead-detail-name">${lead.name}</div>
+      <div class="seq-meta-row">Event: <span>${lead.date||'TBD'}</span> · Guests: <span>${lead.guests||'?'}</span></div>
+      <div class="seq-meta-row">Venue: <span>${lead.venue||'TBD'}</span></div>
+      <div class="seq-meta-row">Services: <span>${lead.food||'TBD'}</span></div>
+      <div class="seq-meta-row">Quote: <span>${lead.value||'TBD'}</span></div>
+      ${lead.contact?`<div class="seq-meta-row">Contact: <span style="font-family:'IBM Plex Mono',monospace">${lead.contact}</span></div>`:''}
+      <div class="seq-meta-row">Last touch: <span>${lead.last||'Unknown'}</span></div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--tx3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;font-weight:600">Objection Type</div>
+        <select class="seq-select" id="obj-sel" onchange="genMsg()" style="width:180px">
+          <option value="ghost"${(lead.obj||'ghost')==='ghost'?' selected':''}>Ghosting / No Response</option>
+          <option value="budget"${lead.obj==='budget'?' selected':''}>Budget Concern</option>
+          <option value="spouse"${lead.obj==='spouse'?' selected':''}>Spouse / Family Discussion</option>
+          <option value="venue"${lead.obj==='venue'?' selected':''}>Venue Approval Pending</option>
+          <option value="vendors"${lead.obj==='vendors'?' selected':''}>Main Vendors First</option>
+          <option value="proof"${lead.obj==='proof'?' selected':''}>Need Proof of Concept</option>
+          <option value="corporate"${lead.obj==='corporate'?' selected':''}>Corporate / Org Follow-up</option>
+        </select>
+      </div>
+      <div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--tx3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:4px;font-weight:600">Touch Number</div>
+        <div class="touch-row" id="touch-row">
+          ${[1,2,3,4,5].map(n=>`<div class="seq-touch-chip${n===1?' active':''}" onclick="setTouch(${n})" id="touch-${n}">${n===5?'Breakup':n}</div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--tx3);letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px;font-weight:600">Generated Message</div>
+      <div class="seq-msg-box" id="seq-msg">Generating...</div>
+    </div>
+    <div class="seq-actions">
+      <div class="seq-copy" onclick="copyMsg()">COPY MESSAGE</div>
+      <div class="seq-draft" onclick="draftEmail()">SAVE AS GMAIL DRAFT</div>
+    </div>`;
+  genMsg();
+}
+
+let currentTouch=1;
+function setTouch(n){
+  currentTouch=n;
+  document.querySelectorAll('.seq-touch-chip').forEach((c,i)=>c.classList.toggle('active',i+1===n));
+  genMsg();
+}
+
+function genMsg(){
+  if(!selSeqLead)return;
+  const lead=selSeqLead;
+  const obj=document.getElementById('obj-sel')?.value||lead.obj||'ghost';
+  const t=currentTouch;
+  const name=lead.name.split(' ')[0];
+  const date=lead.date||'your event';
+  const venue=lead.venue||'your venue';
+  const guests=lead.guests||'your guests';
+  const food=lead.food||'bubble tea';
+  const value=lead.value&&lead.value!='TBD'?lead.value:'pricing';
+  const org=lead.org||lead.venue||'your organization';
+
+  const msgs={
+    ghost:{
+      1:`Hi ${name}! It's Rahmi from Sip N' Snack 🧋 just circling back on your ${date} inquiry — we still have your date available. Did you want to move forward or is there anything I can help figure out?`,
+      2:`Hey ${name}! still on your radar or did something come up? no pressure just want to make sure we don't lose your date 😊`,
+      3:`${name} hi! just a heads up — we're getting more inquiries for ${date} and I'd hate for you to miss out. are you still thinking about it or should I let this one go?`,
+      4:`${name}, I know life gets busy! The boba station at ${venue} for ${guests} guests would honestly be so good. Most clients who wait too long lose their date though 😬 still interested?`,
+      5:`Hey ${name}, I don't want to keep bothering you so I'll make this my last message! If the timing isn't right that's completely okay. If anything changes or you have a future event we'd love to be part of it 🎉`
+    },
+    budget:{
+      1:`Hi ${name}! Rahmi from Sip N' Snack 🧋 I know budget can be tricky for events — just wanted to check if there's a number that works for you and see if we can make it happen?`,
+      2:`Hey ${name}! just wanted to let you know we do have some flexibility depending on the package — even a single boba station for ${guests} guests starts at a price most clients are surprised by. Want me to send a quick breakdown?`,
+      3:`${name} hi! one thing I've seen a lot — clients think boba is more expensive than it is and are always surprised. for ${guests} guests we can usually make it work. what's the number you're working with?`,
+      4:`Hey ${name}! what if we started with just the boba cart for ${date}? it's our most popular option and honestly a great value for the impact it creates. guests go crazy for it every time 😄`,
+      5:`${name}, last message from me! just wanted to say — if budget ever frees up or you have another event down the road, we'd love to make it happen. wishing you an amazing ${date} regardless 🎉`
+    },
+    spouse:{
+      1:`Hi ${name}! Rahmi from Sip N' Snack 🧋 just checking in — did you get a chance to chat with your partner about the boba station? curious what they thought 😊`,
+      2:`Hey ${name}! so what did they say?? 👀 always love hearing what couples decide together lol`,
+      3:`${name} hi! I know decisions like this take some back and forth — I actually put together a quick comparison of what past couples at similar-sized events chose if it'd help make the convo easier?`,
+      4:`Hey ${name}! just wanted to share that ${venue} events we've done have literally had guests lined up the whole night for boba 🧋 it's become the most talked-about thing every time. just saying, partners usually come around fast once they see the pictures 😂`,
+      5:`${name} — last check in! if the timing isn't right that's completely fine, wishing you both an amazing ${date} no matter what you decide 🎉`
+    },
+    venue:{
+      1:`Hi ${name}! Rahmi from Sip N' Snack 🧋 just checking in on the venue approval — any update? we work with most venues in the NY/NJ area and can usually get approved pretty quickly once we submit our COI and license`,
+      2:`Hey ${name}! just a heads up — if your venue needs our certificate of insurance, business license, or menu for approval, we can turn that around same day. just let me know the venue contact!`,
+      3:`${name} hi! have you heard back from ${venue}? we've worked with them (or similar venues) before and the approval process is usually pretty smooth. happy to reach out directly to their events coordinator if it helps?`,
+      4:`Hey ${name}! still waiting on venue approval? quick tip — most venues in our network approve us within a day or two once they have our docs. want me to put together an approval packet to send them?`,
+      5:`${name} — last message from me! if the venue approval ends up not working out, just know we'd love to work with you for any future events. wishing you an amazing ${date} 🎉`
+    },
+    vendors:{
+      1:`Hi ${name}! Rahmi from Sip N' Snack 🧋 totally understand locking in your main vendors first! just don't forget about us when you get to the fun part 😄 we're the one booth guests literally can't stop talking about after`,
+      2:`Hey ${name}! how's the vendor planning going? just wanted to pop back in — we book fast in your date range and I'd hate for us to get snatched up before you're ready`,
+      3:`${name} hi! boba is usually the last thing couples book and then they're bummed they didn't do it sooner lol. once the main stuff is locked in, just give us a shout — we'll make it easy 🧋`,
+      4:`Hey ${name}! your ${date} is coming up and I just wanted to remind you — if you want the boba station, we'd need to lock it in soon. we have a few other inquiries for that weekend and your date would go fast`,
+      5:`${name} — last message! if we miss this one, keep us in mind for any future events. wishing you the most amazing day 🎉`
+    },
+    corporate:{
+      1:`Hi ${name}! Rahmi from Sip N' Snack 🧋 just following up on the inquiry for ${date} — we'd love to bring our boba station to your event. Can I get you a formal quote to share with whoever approves vendors?`,
+      2:`Hey ${name}! just wanted to check in — do you need any documentation from us (W9, COI, business license) to get the vendor process started? we can turn those around same day.`,
+      3:`${name} hi! we've worked with ${org||'universities and corporate offices'} in the past and the approval process is usually pretty quick once we submit our docs. happy to coordinate directly with your events team if that helps?`,
+      4:`Hey ${name}! just flagging that ${date} is coming up and we want to make sure we can lock you in. is there a decision-maker I should loop in directly? happy to send a formal proposal.`,
+      5:`${name} — last check in from our end! if the timing or budget didn't work out that's completely fine. we'd love to be considered for future events whenever the right one comes up. wishing you a great event regardless 🎉`
+    },
+  proof:{
+      1:`Hi ${name}! Rahmi from Sip N' Snack 🧋 I totally get wanting to see more before committing! want me to send you some videos from events similar to yours? the reactions are honestly priceless 😄`,
+      2:`Hey ${name}! we've done ${guests}-person events at venues just like ${venue} — the line doesn't stop moving lol. want me to connect you with a past client? I can ask one of them to share their experience directly`,
+      3:`${name} hi! I just put together a quick highlight from a recent event around your size — want me to send it over? it's the fastest way to get a feel for what it actually looks like`,
+      4:`Hey ${name}! real talk — the #1 thing I hear after every event is "we should have added the ice cream cart too" 😂 but seriously, the boba is always THE thing guests are talking about. let me share some recent photos from ${venue}-style events?`,
+      5:`${name} — last message! just want to leave you with this — if you ever want to see what the experience looks like, our Instagram is full of real event footage. wishing you an amazing ${date} either way 🎉`
+    }
+  };
+
+  const msg=(msgs[obj]||msgs.ghost)[t]||msgs.ghost[1];
+  const el=document.getElementById('seq-msg');
+  if(el)el.textContent=msg;
+}
+
+function copyMsg(){
+  const msg=document.getElementById('seq-msg')?.textContent;
+  if(!msg||msg.includes('Select a lead'))return;
+  navigator.clipboard.writeText(msg).then(()=>showToast('Message copied to clipboard'));
+}
+
+function draftEmail(){
+  const msg=document.getElementById('seq-msg')?.textContent;
+  const lead=selSeqLead;
+  if(!msg||!lead)return;
+  showToast('Opening Gmail draft...');
+  // Extract email from contact field
+  const emailMatch=(lead.contact||'').match(/[\w.-]+@[\w.-]+\.\w+/);
+  const toEmail=emailMatch?emailMatch[0]:'';
+  const subject=`Re: Your Sip N' Snack Inquiry — ${lead.date||'Upcoming Event'}`;
+  const gmailUrl=`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`;
+  window.open(gmailUrl,'_blank');
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ─── CRM PIPELINE ──────────────────────────────────────────────────────────────
+function setF(pipe,val,el){filters[pipe]=val;document.querySelectorAll('#fbar-'+pipe+' .fb').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderPipe(pipe);}
+function doSearch(pipe,val){searches[pipe]=val.toLowerCase();renderPipe(pipe);}
+
+function renderPipe(pipe){
+  const con=document.getElementById(pipe+'-body');
+  const f=filters[pipe],s=searches[pipe];
+  let leads=pipe==='corp'?[...D.corp]:[...D[pipe]];
+  if(s)leads=leads.filter(x=>(x.name+x.venue+x.food+x.notes+x.contact+(x.handle||'')).toLowerCase().includes(s));
+  const order=PO[pipe];let html='';
+  for(const st of order){
+    if(f!=='all'&&f!==st)continue;
+    const g=leads.filter(x=>x.status===st);if(!g.length)continue;
+    html+=`<div class="sh"><div class="sl"></div><div class="st">${SLB[st]||st.toUpperCase()}</div><div class="sn">${g.length}</div><div class="sl"></div></div><div class="g3">`;
+    for(const x of g)html+=cardHTML(x);html+='</div>';
+  }
+  if(!html)html='<div style="text-align:center;padding:32px;color:var(--tx3);font-size:9px;font-family:IBM Plex Mono,monospace;letter-spacing:.1em">NO LEADS MATCH FILTER</div>';
+  con.innerHTML=html;updateMeta();
+}
+
+function cardHTML(c){
+  const cfg=SC[c.status]||SC.pending;
+  return `<div class="card ${cfg.c}" onclick="openEdit('${c.id}','${c.pipe}')">
+    <div class="ct"><span class="cn">${c.name}</span><span class="cd">${c.date||'—'}</span></div>
+    ${c.venue?`<div class="cv">${c.guests&&c.guests!='—'?c.guests+' guests · ':''}${c.venue}</div>`:''}
+    ${c.food&&c.food!='—'?`<div class="cs_">${c.food}</div>`:''}
+    ${c.value&&c.value!='TBD'&&c.value!='—'?`<div class="cval">${c.value}</div>`:''}
+    ${c.contact?`<div class="ccon">${c.contact}</div>`:''}
+    ${c.notes?`<div class="cnote">${c.notes}</div>`:''}
+    ${c.last?`<div class="cs_" style="font-style:italic">Last: ${c.last}</div>`:''}
+    <div class="tags"><span class="tag ${cfg.t}">${cfg.l}</span>${c.handle?`<a href="https://instagram.com/${c.handle.replace('@','')}" target="_blank" style="text-decoration:none"><span class="tag tx_" title="Open Instagram profile" style="cursor:pointer">${c.handle} ↗</span></a>`:''}<button class="msg-btn" onclick="event.stopPropagation();openSeqFromCard('${c.id}','${c.pipe}')" title="Generate message">✉</button></div>
+  </div>`;
+}
+
+function updateMeta(){
+  const all=[...D.ig,...D.wix,...D.corp];
+  const active=all.filter(x=>!['closed','lost'].includes(x.status));
+  document.getElementById('nb-ig').textContent=D.ig.filter(x=>!['closed','lost'].includes(x.status)).length;
+  document.getElementById('nb-wix').textContent=D.wix.filter(x=>!['closed','lost'].includes(x.status)).length;
+  if(document.getElementById('nb-corp')) document.getElementById('nb-corp').textContent=D.corp.filter(x=>!['closed','lost'].includes(x.status)).length;
+  document.getElementById('sm-active').textContent=active.length;
+}
+
+function rebuildCharts(){
+  const pg=document.querySelector('.pg.on');if(!pg)return;
+  if(pg.id==='pg-dash')buildDash();
+  if(pg.id==='pg-analytics')buildAnalytics();
+}
+
+// ─── MODAL ─────────────────────────────────────────────────────────────────────
+function openEdit(id,pipe){
+  const c=D[pipe].find(x=>x.id===id);if(!c)return;editId=id;
+  document.getElementById('mtitle').textContent='EDIT — '+c.name.toUpperCase();
+  document.getElementById('del-btn').style.display='';
+  ['name','handle','date','guests','venue','food','value','contact','notes','last'].forEach(f=>{document.getElementById('f-'+f).value=c[f]||'';});
+  if(document.getElementById('f-org')) document.getElementById('f-org').value=c.org||'';
+  if(document.getElementById('f-orgtype')) document.getElementById('f-orgtype').value=c.orgtype||'corporate';
+  const isCorp=c.pipe==='corp';
+  if(document.getElementById('f-org-row')) document.getElementById('f-org-row').style.display=isCorp?'block':'none';
+  if(document.getElementById('f-orgtype-row')) document.getElementById('f-orgtype-row').style.display=isCorp?'block':'none';
+  document.getElementById('f-status').value=c.status;document.getElementById('f-pipe').value=c.pipe;
+  document.getElementById('f-obj').value=c.obj||'';
+  document.getElementById('overlay').classList.add('on');
+}
+function openAdd(pipe){
+  editId=null;document.getElementById('mtitle').textContent='NEW LEAD';
+  document.getElementById('del-btn').style.display='none';
+  ['name','handle','date','guests','venue','food','value','contact','notes','last'].forEach(f=>document.getElementById('f-'+f).value='');
+  if(document.getElementById('f-org')) document.getElementById('f-org').value='';
+  const addIsCorp=pipe==='corp';
+  if(document.getElementById('f-org-row')) document.getElementById('f-org-row').style.display=addIsCorp?'block':'none';
+  if(document.getElementById('f-orgtype-row')) document.getElementById('f-orgtype-row').style.display=addIsCorp?'block':'none';
+  document.getElementById('f-status').value='hot';document.getElementById('f-pipe').value=pipe;document.getElementById('f-obj').value='';
+  document.getElementById('overlay').classList.add('on');
+}
+function saveCard(){
+  const pipe=document.getElementById('f-pipe').value;
+  const card={id:editId||uid(),pipe,name:document.getElementById('f-name').value,handle:document.getElementById('f-handle').value,date:document.getElementById('f-date').value,guests:document.getElementById('f-guests').value,venue:document.getElementById('f-venue').value,food:document.getElementById('f-food').value,value:document.getElementById('f-value').value,contact:document.getElementById('f-contact').value,status:document.getElementById('f-status').value,obj:document.getElementById('f-obj').value,notes:document.getElementById('f-notes').value,last:document.getElementById('f-last').value,org:document.getElementById('f-org')?document.getElementById('f-org').value:'',orgtype:document.getElementById('f-orgtype')?document.getElementById('f-orgtype').value:''};
+  if(editId){D.ig=D.ig.filter(x=>x.id!==editId);D.wix=D.wix.filter(x=>x.id!==editId);D.corp=D.corp.filter(x=>x.id!==editId);}
+  if(pipe==='corp'){D.corp.push(card);}else{D[pipe].push(card);}
+  save();closeModal();renderPipe('ig');renderPipe('wix');
+  if(document.getElementById('pg-corp').classList.contains('on'))renderCorpType(activeCorpType);
+  buildTicker();
+  if(document.getElementById('pg-seq').classList.contains('on'))buildSeq();
+}
+function deleteCard(){
+  if(!editId||!confirm('Delete this lead?'))return;
+  D.ig=D.ig.filter(x=>x.id!==editId);D.wix=D.wix.filter(x=>x.id!==editId);D.corp=D.corp.filter(x=>x.id!==editId);
+  save();closeModal();renderPipe('ig');renderPipe('wix');if(document.getElementById('pg-corp').classList.contains('on'))renderCorpType(activeCorpType);
+}
+function closeModal(){document.getElementById('overlay').classList.remove('on');}
+function doExport(){const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='alfred_v5_'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+function doImport(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);save();renderPipe('ig');renderPipe('wix');buildDash();buildTicker();showToast('Import successful');}catch{alert('Invalid JSON');}};r.readAsText(f);};i.click();}
+
+// ─── INIT ──────────────────────────────────────────────────────────────────────
+loadTheme();load();renderPipe('ig');renderPipe('wix');buildDash();buildTicker();buildEvents();buildDeposits();
+</script>
+</body>
+</html>
