@@ -246,6 +246,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex
   <div class="logo mono">ALFRED <sup>SIP N' SNACK ERP v4.0</sup></div>
   <div class="tbr">
     <div class="clock mono" id="clock">--:--:--</div>
+    <div class="tbtn" onclick="manualSync()" id="sync-btn" title="Sync with cloud">⟳ SYNC</div>
     <div class="tbtn" onclick="toggleTheme()">◐ <span id="tlbl">WHITE RAVEN</span></div>
     <div class="live"><div class="live-dot"></div>LIVE</div>
   </div>
@@ -263,7 +264,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex
     <div class="sbi" onclick="nav('analytics',this)"><span>Analytics</span></div>
     <div class="sbi" onclick="nav('events',this)"><span>Booked Events</span><span class="sbadge" id="nb-ev">28</span></div>
     <div class="sbi" onclick="nav('deposits',this)"><span>Deposit Tracker</span><span class="sbadge" id="nb-dep">—</span></div>
-    <div class="sbi" onclick="nav('seq',this)"><span>Re-Engage</span><span class="sbadge" id="nb-seq">—</span></div>
+    <div class="sbi" id="sbi-seq" onclick="nav('seq',this)"><span>Re-Engage</span><span class="sbadge" id="nb-seq">—</span></div>
     <div class="sbi" onclick="nav('ig',this)"><span>IG Pipeline</span><span class="sbadge" id="nb-ig">—</span></div>
     <div class="sbi" onclick="nav('wix',this)"><span>Wix / Email</span><span class="sbadge" id="nb-wix">—</span></div>
     <div class="sbi" onclick="nav('corp',this)"><span>Corporate / Orgs</span><span class="sbadge" id="nb-corp">—</span></div>
@@ -540,6 +541,38 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex
 <div class="toast" id="toast"></div>
 
 <script>
+// ─── SUPABASE CONFIG ──────────────────────────────────────────────────────────
+const SB_URL = 'https://vvpxgyocbserthdxzoue.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2cHhneW9jYnNlcnRoZHh6b3VlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzOTIzOTMsImV4cCI6MjA4OTk2ODM5M30.ah-6CEBrRMvVYoQgsnolOBlJxb5bWDJiPVioAz6vmhk';
+const SB_TABLE = 'alfred_data';
+const SB_ROW_KEY = 'alfred_v5';
+
+async function sbGet() {
+  try {
+    const r = await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?key=eq.${SB_ROW_KEY}&select=value`, {
+      headers: {'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY}
+    });
+    const rows = await r.json();
+    if (rows && rows.length > 0) return JSON.parse(rows[0].value);
+  } catch(e) { console.warn('Supabase read failed:', e); }
+  return null;
+}
+
+async function sbSet(data) {
+  try {
+    await fetch(`${SB_URL}/rest/v1/${SB_TABLE}`, {
+      method: 'POST',
+      headers: {
+        'apikey': SB_KEY,
+        'Authorization': 'Bearer ' + SB_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({key: SB_ROW_KEY, value: JSON.stringify(data)})
+    });
+  } catch(e) { console.warn('Supabase write failed:', e); }
+}
+
 // ─── REAL EVENTS DATA (Google Calendar + Jotform/HoneyBook Gmail) ─────────────
 const EVENTS=[
   {n:'Harjot Singh',dt:'Jan 3, 2026',v:'11 S Broadway, Hicksville NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:1},
@@ -714,22 +747,64 @@ corp:[
 ]};
 
 // ─── STATE ─────────────────────────────────────────────────────────────────────
-let D={ig:[],wix:[],corp:[]},editId=null,filters={ig:'all',wix:'all',corp:'all'},searches={ig:'',wix:'',corp:''},analyticsYr='2026',evYr='2026',selSeqLead=null;
+let D={ig:[],wix:[],corp:[],closedDeposits:[]},editId=null,filters={ig:'all',wix:'all',corp:'all'},searches={ig:'',wix:'',corp:''},analyticsYr='2026',evYr='2026',selSeqLead=null;
 let CH={};
 
 const SC={urgent:{l:'URGENT',t:'tr',c:'curg'},hot:{l:'HOT',t:'ta',c:'chot'},pending:{l:'PENDING',t:'tb',c:''},nurture:{l:'NURTURE',t:'tg',c:''},reengage:{l:'RE-ENGAGE',t:'ta',c:''},clarify:{l:'CLARIFY',t:'tx_',c:''},oos:{l:'OOS',t:'tr',c:''},closed:{l:'CLOSED',t:'tg',c:'cwon'},lost:{l:'LOST',t:'tr',c:''}};
 const PO={ig:['urgent','hot','pending','clarify','nurture','closed','lost'],wix:['hot','urgent','reengage','clarify','oos','closed','lost'],corp:['hot','pending','clarify','nurture','closed','lost']};
-const SLB={urgent:'URGENT — CLOSE NOW',hot:'HOT LEADS',pending:'PENDING CLOSE',nurture:'NURTURE / FOLLOW LATER',reengage:'RE-ENGAGE — QUOTED, NO RESPONSE',clarify:'CLARIFY STAGE',clarify:'CLARIFY STAGE',oos:'OUT OF STATE',closed:'CLOSED / WON',lost:'LOST / REJECTED'};
+const SLB={urgent:'URGENT — CLOSE NOW',hot:'HOT LEADS',pending:'PENDING CLOSE',nurture:'NURTURE / FOLLOW LATER',reengage:'RE-ENGAGE — QUOTED, NO RESPONSE',clarify:'CLARIFY STAGE',oos:'OUT OF STATE',closed:'CLOSED / WON',lost:'LOST / REJECTED'};
 
-function load(){try{const s=localStorage.getItem('alfred_v5');if(s){
-    D=JSON.parse(s);
-    // Ensure corp array exists (backward compat)
-    if(!D.corp) D.corp=JSON.parse(JSON.stringify(DEF.corp));
-  }else{D=JSON.parse(JSON.stringify(DEF));save();}}catch{D=JSON.parse(JSON.stringify(DEF));}}
-function save(){localStorage.setItem('alfred_v5',JSON.stringify(D));}
+function load(){
+  // Load from localStorage immediately so UI renders fast
+  try{
+    const s=localStorage.getItem('alfred_v5');
+    if(s){
+      D=JSON.parse(s);
+      if(!D.corp) D.corp=JSON.parse(JSON.stringify(DEF.corp));
+      if(!D.closedDeposits) D.closedDeposits=[];
+    } else {
+      D=JSON.parse(JSON.stringify(DEF));
+      save();
+    }
+  } catch{D=JSON.parse(JSON.stringify(DEF));}
+  // Then sync from Supabase in background — overwrite if newer data exists
+  sbGet().then(remote => {
+    if(!remote) return;
+    if(!remote.corp) remote.corp=JSON.parse(JSON.stringify(DEF.corp));
+    if(!remote.closedDeposits) remote.closedDeposits=[];
+    D=remote;
+    localStorage.setItem('alfred_v5',JSON.stringify(D));
+    // Re-render everything with fresh data
+    renderPipe('ig');renderPipe('wix');renderCorpType('all');
+    buildDash();buildTicker();buildEvents();buildDeposits();
+    if(document.getElementById('pg-seq').classList.contains('on')) buildSeq();
+    showToast('Synced from cloud');
+  }).catch(()=>{});
+}
+function save(){
+  localStorage.setItem('alfred_v5',JSON.stringify(D));
+  sbSet(D); // async fire-and-forget — localStorage is source of truth for speed
+}
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
 
 // ─── THEME ─────────────────────────────────────────────────────────────────────
+function manualSync(){
+  const btn=document.getElementById('sync-btn');
+  btn.textContent='⟳ SYNCING...';
+  sbGet().then(remote=>{
+    if(!remote){showToast('Cloud empty — pushing local data');sbSet(D);btn.textContent='⟳ SYNC';return;}
+    if(!remote.corp) remote.corp=JSON.parse(JSON.stringify(DEF.corp));
+    if(!remote.closedDeposits) remote.closedDeposits=[];
+    D=remote;
+    localStorage.setItem('alfred_v5',JSON.stringify(D));
+    renderPipe('ig');renderPipe('wix');renderCorpType('all');
+    buildDash();buildTicker();buildEvents();buildDeposits();
+    if(document.getElementById('pg-seq').classList.contains('on')) buildSeq();
+    btn.textContent='⟳ SYNC';
+    showToast('Synced — all devices up to date');
+  }).catch(()=>{btn.textContent='⟳ SYNC';showToast('Sync failed — check connection');});
+}
+
 function toggleTheme(){
   const h=document.documentElement;const d=h.getAttribute('data-theme')==='dark';
   h.setAttribute('data-theme',d?'light':'dark');
@@ -918,9 +993,75 @@ function buildEvents(){
 }
 
 // ─── DEPOSIT TRACKER ───────────────────────────────────────────────────────────
+function autoDeposit(card, prevStatus){
+  // Called after saveCard — if status changed TO closed, add/update deposit entry
+  if(card.status !== 'closed') return;
+  if(prevStatus === 'closed') return; // already closed, no change needed
+  // Parse value
+  const vm = card.value ? card.value.match(/\$?([\d,]+)/) : null;
+  const val = vm ? parseInt(vm[1].replace(/,/g,'')) : 0;
+  if(!val) return; // no value on file, skip auto-add (entry created with nulls)
+  const dep50 = Math.round(val * 0.5);
+  // Check if already exists
+  const exists = D.closedDeposits.find(d=>d.id===card.id);
+  if(exists){
+    // Update value if it changed
+    exists.val = val;
+    exists.dep = dep50;
+  } else {
+    D.closedDeposits.push({
+      id: card.id,
+      n: card.name,
+      dt: card.date||'TBD',
+      v: card.venue||'',
+      val: val,
+      dep: dep50,
+      paid: 0,
+      src: card.pipe==='corp'?'Corporate':'CRM',
+      pipe: card.pipe,
+      note: ''
+    });
+  }
+  save();
+  // Refresh deposit view if open
+  if(document.getElementById('pg-deposits').classList.contains('on')) buildDeposits();
+  showToast(card.name+' added to deposit tracker');
+}
+
+function editPaid(key, currentPaid){
+  const amt=prompt('Enter amount paid for this contract ($):',currentPaid);
+  if(amt===null) return;
+  const num=parseInt(amt.replace(/[$,]/g,''));
+  if(isNaN(num)||num<0){showToast('Invalid amount');return;}
+  // Try CRM entry first
+  const crmIdx=D.closedDeposits.findIndex(d=>d.id===key||d.n===key);
+  if(crmIdx>-1){
+    D.closedDeposits[crmIdx].paid=num;
+    save();buildDeposits();
+    showToast('Payment updated');
+    return;
+  }
+  // Static EVENTS entry — add to CRM overrides
+  const ev=EVENTS.find(e=>(e.id||e.n)===key);
+  if(ev){
+    D.closedDeposits.push({...ev,id:key,paid:num,fromCRM:true});
+    save();buildDeposits();
+    showToast('Payment updated');
+  }
+}
+
 function buildDeposits(){
-  const ev2026=EVENTS.filter(e=>e.yr===2026&&e.val);
-  let totalVal=0,totalPaid=0,totalBal=0,noVal=EVENTS.filter(e=>e.yr===2026&&!e.val).length;
+  // Merge static EVENTS with dynamic CRM closures
+  // Use id to deduplicate — CRM entry wins if both exist
+  const staticEv=EVENTS.filter(e=>e.yr>=2026&&e.val);
+  const crmEv=D.closedDeposits||[];
+  // Build merged map: static first, then overwrite/add CRM entries
+  const depMap=new Map();
+  staticEv.forEach(e=>depMap.set(e.id||e.n, e));
+  crmEv.forEach(e=>depMap.set(e.id, {...e, fromCRM:true}));
+  const ev2026=Array.from(depMap.values()).filter(e=>e.val);
+  let totalVal=0,totalPaid=0,totalBal=0;
+  const noVal=EVENTS.filter(e=>e.yr>=2026&&!e.val).length + crmEv.filter(e=>!e.val).length;
   ev2026.forEach(e=>{
     const bal=(e.val||0)-(e.paid||0);
     totalVal+=e.val||0;totalPaid+=e.paid||0;totalBal+=bal;
@@ -932,8 +1073,8 @@ function buildDeposits(){
   document.getElementById('sm-dep-bal').textContent='$'+totalBal.toLocaleString();
 
   // Sort by event date
-  const sorted=[...ev2026].sort((a,b)=>a.mo-b.mo);
-  document.getElementById('dep-rows').innerHTML=sorted.map(e=>{
+  const sorted=[...ev2026].sort((a,b)=>(a.mo||12)-(b.mo||12));
+  document.getElementById('dep-rows').innerHTML=sorted.map((e,idx)=>{
     const bal=(e.val||0)-(e.paid||0);
     const pct=e.val?Math.round((e.paid||0)/e.val*100):0;
     let statusLabel,statusClass;
@@ -941,11 +1082,19 @@ function buildDeposits(){
     else if((e.paid||0)>0){statusLabel='PARTIAL';statusClass='partial';}
     else{statusLabel='DUE';statusClass='due';}
     const balCol=bal===0?'green':bal<500?'amber':'red';
-    return `<div class="dep-row">
-      <div><div class="dep-name">${e.n}</div>${e.note?`<div style="font-size:9px;color:var(--am)">${e.note}</div>`:''}</div>
-      <div class="dep-date">${e.dt}</div>
+    const rowKey=e.id||e.n;
+    const isCRM=!!e.fromCRM;
+    return `<div class="dep-row" style="${isCRM?'border-left:2px solid var(--acc)':''}">
+      <div>
+        <div class="dep-name">${e.n}${isCRM?'<span style="font-family:IBM Plex Mono,monospace;font-size:7px;color:var(--acc2);margin-left:5px;padding:1px 4px;background:var(--accdim);border-radius:2px">CRM</span>':''}</div>
+        ${e.note?`<div style="font-size:9px;color:var(--am)">${e.note}</div>`:''}
+      </div>
+      <div class="dep-date">${e.dt||'TBD'}</div>
       <div class="dep-total">$${(e.val||0).toLocaleString()}</div>
-      <div class="dep-paid">$${(e.paid||0).toLocaleString()} <span style="font-size:8px;color:var(--tx3)">(${pct}%)</span></div>
+      <div class="dep-paid" style="cursor:pointer" onclick="editPaid('${rowKey}',${e.paid||0})" title="Click to update amount paid">
+        $${(e.paid||0).toLocaleString()} <span style="font-size:8px;color:var(--tx3)">(${pct}%)</span>
+        <span style="font-size:8px;color:var(--acc3);margin-left:3px">✎</span>
+      </div>
       <div style="display:flex;align-items:center;gap:6px">
         <div class="dep-bal ${balCol}">${bal===0?'✓':'$'+bal.toLocaleString()}</div>
         <div class="dep-status ${statusClass}">${statusLabel}</div>
@@ -1035,7 +1184,8 @@ function openSeqFromCard(id,pipe){
   currentTouch=1;
   // Navigate to seq tab
   document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('on'));
-  document.querySelector('.sbi[onclick*="seq"]').classList.add('on');
+  const seqNavBtn=document.getElementById('sbi-seq');
+  if(seqNavBtn) seqNavBtn.classList.add('on');
   document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
   document.getElementById('pg-seq').classList.add('on');
   document.getElementById('scroll').scrollTop=0;
@@ -1187,8 +1337,8 @@ function showToast(msg){
 }
 
 // ─── CRM PIPELINE ──────────────────────────────────────────────────────────────
-function setF(pipe,val,el){filters[pipe]=val;document.querySelectorAll('#fbar-'+pipe+' .fb').forEach(x=>x.classList.remove('on'));el.classList.add('on');renderPipe(pipe);}
-function doSearch(pipe,val){searches[pipe]=val.toLowerCase();renderPipe(pipe);}
+function setF(pipe,val,el){filters[pipe]=val;document.querySelectorAll('#fbar-'+pipe+' .fb').forEach(x=>x.classList.remove('on'));el.classList.add('on');if(pipe==='corp'){renderCorpType(activeCorpType);}else{renderPipe(pipe);}}
+function doSearch(pipe,val){searches[pipe]=val.toLowerCase();if(pipe==='corp'){renderCorpType(activeCorpType);}else{renderPipe(pipe);}}
 
 function renderPipe(pipe){
   const con=document.getElementById(pipe+'-body');
@@ -1200,7 +1350,7 @@ function renderPipe(pipe){
     if(f!=='all'&&f!==st)continue;
     const g=leads.filter(x=>x.status===st);if(!g.length)continue;
     html+=`<div class="sh"><div class="sl"></div><div class="st">${SLB[st]||st.toUpperCase()}</div><div class="sn">${g.length}</div><div class="sl"></div></div><div class="g3">`;
-    for(const x of g)html+=cardHTML(x);html+='</div>';
+    for(const x of g)html+=(pipe==='corp'?corpCardHTML(x):cardHTML(x));html+='</div>';
   }
   if(!html)html='<div style="text-align:center;padding:32px;color:var(--tx3);font-size:9px;font-family:IBM Plex Mono,monospace;letter-spacing:.1em">NO LEADS MATCH FILTER</div>';
   con.innerHTML=html;updateMeta();
@@ -1216,7 +1366,7 @@ function cardHTML(c){
     ${c.contact?`<div class="ccon">${c.contact}</div>`:''}
     ${c.notes?`<div class="cnote">${c.notes}</div>`:''}
     ${c.last?`<div class="cs_" style="font-style:italic">Last: ${c.last}</div>`:''}
-    <div class="tags"><span class="tag ${cfg.t}">${cfg.l}</span>${c.handle?`<a href="https://instagram.com/${c.handle.replace('@','')}" target="_blank" style="text-decoration:none"><span class="tag tx_" title="Open Instagram profile" style="cursor:pointer">${c.handle} ↗</span></a>`:''}<button class="msg-btn" onclick="event.stopPropagation();openSeqFromCard('${c.id}','${c.pipe}')" title="Generate message">✉</button></div>
+    <div class="tags"><span class="tag ${cfg.t}">${cfg.l}</span><button class="msg-btn" onclick="event.stopPropagation();openSeqFromCard('${c.id}','${c.pipe}')" title="Generate message">✉</button></div>
   </div>`;
 }
 
@@ -1263,11 +1413,19 @@ function openAdd(pipe){
 }
 function saveCard(){
   const pipe=document.getElementById('f-pipe').value;
+  // Capture previous status before removal (for autoDeposit logic)
+  let prevStatus='';
+  if(editId){
+    const allPipes=[...D.ig,...D.wix,...D.corp];
+    const prev=allPipes.find(x=>x.id===editId);
+    if(prev) prevStatus=prev.status;
+  }
   const card={id:editId||uid(),pipe,name:document.getElementById('f-name').value,handle:document.getElementById('f-handle').value,date:document.getElementById('f-date').value,guests:document.getElementById('f-guests').value,venue:document.getElementById('f-venue').value,food:document.getElementById('f-food').value,value:document.getElementById('f-value').value,contact:document.getElementById('f-contact').value,status:document.getElementById('f-status').value,obj:document.getElementById('f-obj').value,notes:document.getElementById('f-notes').value,last:document.getElementById('f-last').value,org:document.getElementById('f-org')?document.getElementById('f-org').value:'',orgtype:document.getElementById('f-orgtype')?document.getElementById('f-orgtype').value:''};
   if(editId){D.ig=D.ig.filter(x=>x.id!==editId);D.wix=D.wix.filter(x=>x.id!==editId);D.corp=D.corp.filter(x=>x.id!==editId);}
   if(pipe==='corp'){D.corp.push(card);}else{D[pipe].push(card);}
   save();closeModal();renderPipe('ig');renderPipe('wix');
   if(document.getElementById('pg-corp').classList.contains('on'))renderCorpType(activeCorpType);
+  autoDeposit(card, prevStatus);
   buildTicker();
   if(document.getElementById('pg-seq').classList.contains('on'))buildSeq();
 }
@@ -1281,7 +1439,7 @@ function doExport(){const b=new Blob([JSON.stringify(D,null,2)],{type:'applicati
 function doImport(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);save();renderPipe('ig');renderPipe('wix');buildDash();buildTicker();showToast('Import successful');}catch{alert('Invalid JSON');}};r.readAsText(f);};i.click();}
 
 // ─── INIT ──────────────────────────────────────────────────────────────────────
-loadTheme();load();renderPipe('ig');renderPipe('wix');buildDash();buildTicker();buildEvents();buildDeposits();
+loadTheme();load();renderPipe('ig');renderPipe('wix');renderCorpType('all');buildDash();buildTicker();buildEvents();buildDeposits();
 </script>
 </body>
 </html>
