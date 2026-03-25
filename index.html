@@ -263,7 +263,7 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex
     <div class="sbi on" onclick="nav('dash',this)"><span>Dashboard</span></div>
     <div class="sbi" onclick="nav('analytics',this)"><span>Analytics</span></div>
     <div class="sbi" onclick="nav('events',this)"><span>Booked Events</span><span class="sbadge" id="nb-ev">28</span></div>
-    <div class="sbi" onclick="nav('deposits',this)"><span>Deposit Tracker</span><span class="sbadge" id="nb-dep">—</span></div>
+    <div class="sbi" onclick="nav('revenue',this)"><span>Revenue Tracker</span><span class="sbadge" id="nb-rev">—</span></div>
     <div class="sbi" id="sbi-seq" onclick="nav('seq',this)"><span>Re-Engage</span><span class="sbadge" id="nb-seq">—</span></div>
     <div class="sbi" onclick="nav('ig',this)"><span>IG Pipeline</span><span class="sbadge" id="nb-ig">—</span></div>
     <div class="sbi" onclick="nav('wix',this)"><span>Wix / Email</span><span class="sbadge" id="nb-wix">—</span></div>
@@ -289,6 +289,13 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex
 
 <!-- DASHBOARD -->
 <div class="pg on" id="pg-dash">
+  <div style="position:relative;margin-bottom:14px">
+    <input id="master-search" type="text" placeholder="Search all leads, events, clients by name..." 
+      style="width:100%;background:var(--bg2);border:1px solid var(--bdr2);border-radius:2px;padding:9px 14px 9px 32px;color:var(--tx);font-family:'IBM Plex Sans',sans-serif;font-size:12px;outline:none"
+      oninput="doMasterSearch(this.value)" onfocus="this.style.borderColor='var(--acc3)'" onblur="this.style.borderColor='var(--bdr2)'">
+    <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--tx3);font-size:14px">⌕</span>
+    <div id="master-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--bg1);border:1px solid var(--bdr2);border-top:none;border-radius:0 0 2px 2px;z-index:200;max-height:320px;overflow-y:auto;box-shadow:0 4px 12px var(--shadow)"></div>
+  </div>
   <div class="g4">
     <div class="kpi"><div class="kv" id="k-active">—</div><div class="kl">Active Leads</div><div class="ks" id="k-sub"></div></div>
     <div class="kpi am"><div class="kv">$28.1K+</div><div class="kl">2026 Contracted</div><div class="ks">25 signed · $14K+ deposits due</div></div>
@@ -394,13 +401,15 @@ html,body{height:100%;background:var(--bg);color:var(--tx);font-family:'IBM Plex
 </div>
 
 <!-- DEPOSIT TRACKER -->
-<div class="pg" id="pg-deposits">
+<div class="pg" id="pg-revenue">
   <div class="g4" style="margin-bottom:16px">
-    <div class="kpi am"><div class="kv" id="dep-total-v">—</div><div class="kl">Total Contracted</div><div class="ks">events with values on file</div></div>
-    <div class="kpi"><div class="kv" id="dep-paid-v">—</div><div class="kl">Deposits Collected</div><div class="ks">confirmed paid</div></div>
-    <div class="kpi rd"><div class="kv" id="dep-bal-v">—</div><div class="kl">Balance Outstanding</div><div class="ks">remaining to collect</div></div>
-    <div class="kpi bl"><div class="kv" id="dep-unknown-v">—</div><div class="kl">Value Not On File</div><div class="ks">contracts with no quote</div></div>
+    <div class="kpi am"><div class="kv" id="dep-total-v">—</div><div class="kl">Total Contracted</div><div class="ks">all events with values</div></div>
+    <div class="kpi"><div class="kv" id="dep-paid-v">—</div><div class="kl">Collected</div><div class="ks">confirmed paid to date</div></div>
+    <div class="kpi rd"><div class="kv" id="dep-bal-v">—</div><div class="kl">Outstanding Balance</div><div class="ks">remaining to collect</div></div>
+    <div class="kpi bl"><div class="kv" id="dep-unknown-v">—</div><div class="kl">No Value On File</div><div class="ks">contracts pending quote</div></div>
   </div>
+  <div class="sh"><div class="sl"></div><div class="st">Monthly Revenue — Contracted vs Collected</div><div class="sl"></div></div>
+  <div class="box" style="margin-bottom:14px"><canvas id="rev-tracker-c" height="100"></canvas></div>
   <div class="sh"><div class="sl"></div><div class="st">Contracts — Balance Status</div><div class="sl"></div></div>
   <div class="dep-row dep-hdr">
     <div>Client</div><div>Event Date</div><div>Total</div><div>Paid</div><div>Balance / Status</div>
@@ -575,53 +584,64 @@ async function sbSet(data) {
 
 // ─── REAL EVENTS DATA (Google Calendar + Jotform/HoneyBook Gmail) ─────────────
 const EVENTS=[
-  {n:'Harjot Singh',dt:'Jan 3, 2026',v:'11 S Broadway, Hicksville NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:1},
-  {n:'Telesha Mahadeo',dt:'Feb 26, 2026',v:'8850 192nd St, Hollis NY',val:800,dep:400,paid:400,src:'Jotform',yr:2026,mo:2},
-  {n:'South Asian & Indo-Caribbean Democratic Club',dt:'Mar 27, 2026',v:'Guy R. Brewer United Democratic Club, Jamaica NY',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:3,type:'Corporate'},
-  {n:'Jasmin Kaur (Binghamton University)',dt:'Mar 22, 2026',v:'4400 Vestal Pkwy, Binghamton NY',val:2000,dep:1000,paid:1000,src:'Jotform',yr:2026,mo:3,type:'University'},
-  {n:'Tanima Alim-Pritom',dt:'Mar 29, 2026',v:'The Elan, NJ',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:3},
-  {n:'Alima Khan',dt:'Apr 2, 2026',v:'10 Milburn, Valley Stream NY',val:950,dep:475,paid:475,src:'Jotform',yr:2026,mo:4},
-  {n:'Laiba Salman',dt:'Apr 11, 2026',v:'881 US-206, Bridgewater NJ',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:4},
-  {n:'Nusrath Jahan',dt:'Apr 24, 2026',v:'13-05 43rd Ave, Long Island City NY',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:4},
-  {n:'Sumathi Arumugam',dt:'Apr 19, 2026',v:'2 Sparrow Dr, Princeton Junction NJ',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:4},
-  {n:'Purva Patel',dt:'May 17, 2026',v:'305 W Northfield Rd, Livingston NJ',val:1700,dep:850,paid:850,src:'Jotform',yr:2026,mo:5},
-  {n:'Nabila Hoque',dt:'May 17, 2026',v:'1444 NJ-73, Pennsaucken NJ',val:2000,dep:1000,paid:1000,src:'Jotform',yr:2026,mo:5},
-  {n:'Rukhma Umer',dt:'Jun 21, 2026',v:'1444 NJ-73, Pennsauken NJ (Eden Gardens)',val:2500,dep:1250,paid:1250,src:'Jotform',yr:2026,mo:6},
-  {n:'Amrit Singh',dt:'Jun 21, 2026',v:'2201 Galloway Rd, Bensalem PA',val:2100,dep:1050,paid:1050,src:'Jotform',yr:2026,mo:6},
-  {n:'Amanpreet Dulku',dt:'Jun 24, 2026',v:'820 NJ-73, Marlton NJ',val:1150,dep:575,paid:575,src:'Jotform',yr:2026,mo:6},
-  {n:'Navjeet Kaur',dt:'Jun 26, 2026',v:'225 Water St, Binghamton NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:6},
-  {n:'Satvir Kaur',dt:'Jul 8, 2026',v:'34 Regent St, Valley Stream NY',val:1300,dep:650,paid:650,src:'HoneyBook',yr:2026,mo:7},
-  {n:'Farah Khalid',dt:'Jul 10, 2026',v:'Omni Hotel, CT',val:null,dep:2000,paid:1000,src:'Jotform',yr:2026,mo:7,note:'$1,000 paid confirmed via email · balance $1,000'},
-  {n:'Tajram Bissoondial',dt:'Jul 23, 2026',v:'13138 131st St, Jamaica NY',val:1250,dep:625,paid:625,src:'Jotform',yr:2026,mo:7},
-  {n:'Taseen Islam',dt:'Jul 26, 2026',v:'114-11 91st Ave, Richmond Hill NY',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:7},
-  {n:'Sadia Malik',dt:'Jul 31, 2026',v:'5720 Route 25A, Wading River NY',val:1300,dep:650,paid:650,src:'Jotform',yr:2026,mo:7},
-  {n:'Shannon Lima',dt:'Aug 8, 2026',v:'25-22 Astoria Blvd, Astoria NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:8},
-  {n:'Israt Motaleb',dt:'Aug 10, 2026',v:'13-05 43rd Ave, Long Island City NY',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:8},
-  {n:'Gonisha Bhoodai',dt:'Aug 12, 2026',v:'10420 102nd St, Ozone Park NY',val:null,dep:null,paid:0,src:'Jotform',yr:2026,mo:8},
-  {n:'Abhinav Bassi',dt:'Aug 14, 2026',v:'977 Washington Valley Rd, Basking Ridge NJ',val:2400,dep:1200,paid:0,src:'Jotform',yr:2026,mo:8,note:'Paying day before event ($1,200 remaining)'},
-  {n:'Maithili Patel',dt:'Aug 16, 2026',v:'1550 US-9, Old Bridge NJ',val:3000,dep:1500,paid:1500,src:'Jotform',yr:2026,mo:8},
-  {n:'Trisa Chakraborty',dt:'Sep 19, 2026',v:'Martinsville Gardens, NJ',val:2400,dep:1200,paid:1200,src:'Jotform',yr:2026,mo:9},
-  {n:'Aneksha',dt:'Sep 17, 2026',v:'8 Castlehill Dr, Marlboro Township NJ',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:9},
-  {n:'Jill Diwankatera',dt:'Oct 17, 2026',v:'500 Veterans Memorial Dr, Pearl River NY',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:10},
-  // 2025
+  // ── MARCH 2026 ──
+  {n:'Harjot Singh',dt:'Jan 3',v:'11 S Broadway, Hicksville NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:1},
+  {n:'Telesha Mahadeo',dt:'Feb 26',v:'8850 192nd St, Hollis NY',val:800,dep:400,paid:800,src:'Jotform',yr:2026,mo:2},
+  {n:'Fordham Holi (Garv Baid)',dt:'Mar 28',v:'Fordham University, Bronx NY',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:3,note:'Invoice sent — 600 servings Pani Puri + Bhel + Falooda — awaiting payment'},
+  {n:'Tanima Alim-Pritom',dt:'Mar 29',v:'The Elan, Lodi NJ',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:3},
+  // ── APRIL 2026 ──
+  {n:'Alima Khan',dt:'Apr 2',v:'10 Milburn Rd, Valley Stream NY',val:950,dep:475,paid:475,src:'Jotform',yr:2026,mo:4},
+  {n:'APRU Punjabi Gala (Rutgers)',dt:'Apr 3',v:'Rutgers University, New Brunswick NJ',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:4,note:'PENDING — vendor approval in progress'},
+  {n:'Stony Brook Bengalis Unite',dt:'Apr 10',v:'Stony Brook University, NY',val:2000,dep:1000,paid:0,src:'HoneyBook',yr:2026,mo:4,note:'Vendor registration in progress — $2,000 contracted'},
+  {n:'Laiba Salman',dt:'Apr 11',v:'881 US-206, Bridgewater NJ',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:4},
+  {n:'Sumathi Arumugam',dt:'Apr 19',v:'2 Sparrow Dr, Princeton Junction NJ',val:1100,dep:550,paid:550,src:'Jotform',yr:2026,mo:4},
+  {n:'SPSA Binghamton Punjabi Gala',dt:'Apr 23',v:'4400 Vestal Pkwy, Binghamton NY',val:2000,dep:1000,paid:1000,src:'Jotform',yr:2026,mo:4},
+  {n:'Nusrath Jahan',dt:'Apr 24',v:'13-05 43rd Ave, Long Island City NY',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:4},
+  // ── MAY 2026 ──
+  {n:'Purva Patel',dt:'May 17',v:'305 W Northfield Rd, Livingston NJ',val:1700,dep:850,paid:850,src:'Jotform',yr:2026,mo:5},
+  {n:'Nabila Hoque',dt:'May 17',v:'1444 NJ-73, Pennsauken NJ',val:2600,dep:1000,paid:1000,src:'Jotform',yr:2026,mo:5,note:'2nd deposit $600 due Mar 1 — balance $1,000 day before event'},
+  {n:'Sheikh Shadman',dt:'May 23',v:'Crest Hollow Country Club, Woodbury NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:5},
+  {n:'Anisah Rozan',dt:'May 30',v:'Maleen Banquet Hall, Queens NY',val:1030,dep:515,paid:515,src:'Jotform',yr:2026,mo:5},
+  // ── JUNE 2026 ──
+  {n:'Amrit Singh',dt:'Jun 21',v:'2201 Galloway Rd, Bensalem PA',val:2100,dep:1050,paid:1050,src:'Jotform',yr:2026,mo:6,note:'STAFFING FLAG — same day as Rukhma Umer'},
+  {n:'Rukhma Umer',dt:'Jun 21',v:'Eden Gardens, Pennsauken NJ',val:2500,dep:1250,paid:1250,src:'Jotform',yr:2026,mo:6,note:'STAFFING FLAG — same day as Amrit Singh'},
+  {n:'Taseen Islam',dt:'Jun 26',v:'TBD',val:1180,dep:590,paid:0,src:'HoneyBook',yr:2026,mo:6,note:'AWAITING CONTRACT — Boba + Fuchka, 70+170 guests'},
+  {n:'Navjeet Kaur',dt:'Jun 26',v:'225 Water St, Binghamton NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:6},
+  // ── JULY 2026 ──
+  {n:'Telesha Mahadeo (Jul)',dt:'Jul 1',v:'8850 192nd St, Hollis NY',val:800,dep:400,paid:400,src:'Jotform',yr:2026,mo:7},
+  {n:'Satvir Kaur',dt:'Jul 8',v:'34 Regent St, Valley Stream NY',val:1300,dep:650,paid:650,src:'HoneyBook',yr:2026,mo:7},
+  {n:'Farah Khalid',dt:'Jul 10',v:'85 Chase Ln, West Haven CT',val:3500,dep:1000,paid:2000,src:'Jotform',yr:2026,mo:7,note:'$2,000 paid — balance $1,500 due day before event. Updated address + +$500 servings.'},
+  {n:'Tajram Bissoondial',dt:'Jul 23',v:'13138 131st Ave, South Ozone Park NY',val:1250,dep:625,paid:625,src:'Jotform',yr:2026,mo:7},
+  {n:'Sheza Ali',dt:'Jul 25',v:'TBD',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:7,note:'Contract pending'},
+  {n:'Sadia Malik',dt:'Jul 31',v:'5720 Route 25A, Wading River NY',val:1300,dep:650,paid:650,src:'Jotform',yr:2026,mo:7},
+  // ── AUGUST 2026 ──
+  {n:'Shannon Lima',dt:'Aug 8',v:'25-22 Astoria Blvd, Astoria NY',val:1200,dep:600,paid:600,src:'Jotform',yr:2026,mo:8},
+  {n:'Israt Motaleb',dt:'Aug 10',v:'13-05 43rd Ave, Long Island City NY',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:8},
+  {n:'Gonisha Bhoodai',dt:'Aug 12',v:'10420 102nd St, Ozone Park NY',val:950,dep:475,paid:475,src:'Jotform',yr:2026,mo:8},
+  {n:'Abhinav Bassi',dt:'Aug 14',v:'977 Washington Valley Rd, Basking Ridge NJ',val:2400,dep:1200,paid:0,src:'Jotform',yr:2026,mo:8,note:'$1,200 due day before event — paying day-of per agreement'},
+  {n:'Maithili Patel',dt:'Aug 16',v:'1550 US-9, Old Bridge NJ',val:3000,dep:1500,paid:1500,src:'Jotform',yr:2026,mo:8},
+  {n:'Rishit Arora',dt:'Aug 20',v:'Franklin Lakes / Somerset NJ',val:1800,dep:600,paid:600,src:'Jotform',yr:2026,mo:8,note:'2-cart option: Franklin NJ + Somerset NJ'},
+  // ── SEPTEMBER 2026 ──
+  {n:'Aneksha',dt:'Sep 17',v:'Marlboro Township NJ',val:null,dep:null,paid:0,src:'HoneyBook',yr:2026,mo:9,note:'PENDING CONTRACT'},
+  {n:'Trisa Chakraborty',dt:'Sep 19',v:'Martinsville Gardens, Martinsville NJ',val:2400,dep:1200,paid:1200,src:'Jotform',yr:2026,mo:9},
+  // ── OCTOBER 2026 ──
+  {n:'Sarah Ramanjulu',dt:'Oct 10',v:'John James Audubon Center, Audubon PA',val:2000,dep:1000,paid:1000,src:'Jotform',yr:2026,mo:10},
+  {n:'Jill Diwankatera',dt:'Oct 17',v:'500 Veterans Memorial Dr, Pearl River NY',val:1000,dep:500,paid:500,src:'Jotform',yr:2026,mo:10},
+  // ── POOJA PATEL (CRM CLOSE) ──
+  {n:'Pooja Patel',dt:'Jun 7',v:'Addison Park, NJ',val:1600,dep:800,paid:0,src:'CRM',yr:2026,mo:6,note:'Contract sent Mar 24 — 50% deposit $800 pending'},
+  // ── 2025 ──
   {n:'Shahreen Jahan',dt:'Aug 1, 2025',v:'169 S Salem St, Randolph NJ',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
   {n:'Mashiyate Meem',dt:'Aug 1, 2025',v:'Legacy Castle, Pompton Plains NJ',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
   {n:'Shakib Hossain',dt:'Aug 1, 2025',v:"Royal Albert's Palace, Fords NJ",val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
-  {n:'Ina Kharbanda',dt:'Aug 2, 2025',v:'Akbar Restaurant, Garden City NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
-  {n:'Jannat Hossain',dt:'Aug 3, 2025',v:'276 W Old Country Rd, Hicksville NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
-  {n:'Sheena Patel',dt:'Aug 8, 2025',v:'Aashirwad Palace, Randolph NJ',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
-  {n:'Zainub Gondal',dt:'Aug 9, 2025',v:'Terrace on the Park, Queens NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
-  {n:'Tania Akhter',dt:'Aug 9, 2025',v:'276 W Old Country Rd, Hicksville NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
-  {n:'Ayesha Khan',dt:'Aug 23, 2025',v:'7 Stephens Path, Port Jefferson NY',val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
-  {n:'Nabila Chowdhury',dt:'Aug 29, 2025',v:"World's Fair Marina, NY",val:null,dep:null,paid:0,src:'Staff Cal',yr:2025,mo:8},
   {n:'Sanjana Rahman',dt:'Dec 28, 2025',v:'845 S Wellwood Ave, Lindenhurst NY',val:1500,dep:750,paid:750,src:'Jotform',yr:2025,mo:12},
-  // 2027
-  {n:'Justine Nardone',dt:'May 7, 2027',v:'1100 South Ave, Staten Island NY',val:null,dep:null,paid:0,src:'Jotform',yr:2027,mo:5}];
+  // ── 2027 ──
+  {n:'Justine Nardone',dt:'May 7, 2027',v:'1100 South Ave, Staten Island NY',val:1250,dep:625,paid:0,src:'Jotform',yr:2027,mo:5}
+]
 
 // ─── ANALYTICS DATA ────────────────────────────────────────────────────────────
 const M25={inq:[5,6,2,11,29,32,30,50,29,20,19,8],bk:[2,2,0,4,5,2,4,12,6,4,2,2]};
 const M26={inq:[5,5,13,23,17,19,13,15,14,9,1,2],bk:[1,0,1,2,1,1,1,4,3,3,0,0]};
-const REV26=[1200,800,4000,1950,3700,5800,3850,6400,2400,1000,0,0];
+const REV26=[1200, 800, 1000, 6050, 6530, 8580, 8150, 10350, 2400, 3000, 0, 0];
 const MOS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
 // ─── CRM DATA ─────────────────────────────────────────────────────────────────
@@ -776,7 +796,7 @@ function load(){
     localStorage.setItem('alfred_v5',JSON.stringify(D));
     // Re-render everything with fresh data
     renderPipe('ig');renderPipe('wix');renderCorpType('all');
-    buildDash();buildTicker();buildEvents();buildDeposits();
+    buildDash();buildTicker();buildEvents();buildRevenue();
     if(document.getElementById('pg-seq').classList.contains('on')) buildSeq();
     showToast('Synced from cloud');
   }).catch(()=>{});
@@ -788,6 +808,114 @@ function save(){
 function uid(){return 'id'+Date.now()+Math.random().toString(36).slice(2,6);}
 
 // ─── THEME ─────────────────────────────────────────────────────────────────────
+function doMasterSearch(val){
+  const box=document.getElementById('master-results');
+  if(!val||val.length<2){box.style.display='none';return;}
+  const q=val.toLowerCase();
+  const results=[];
+
+  // Search all CRM leads
+  [...D.ig,...D.wix,...D.corp].forEach(l=>{
+    const hay=(l.name+' '+(l.handle||'')+' '+(l.venue||'')+' '+(l.food||'')+' '+(l.notes||'')+' '+(l.contact||'')+' '+(l.org||'')).toLowerCase();
+    if(hay.includes(q)) results.push({type:'lead',pipe:l.pipe,id:l.id,name:l.name,sub:`${l.date||''} · ${l.venue||''} · ${l.value||''}`,status:l.status,cfg:SC[l.status]||SC.pending});
+  });
+
+  // Search EVENTS
+  EVENTS.forEach(e=>{
+    const hay=(e.n+' '+(e.v||'')+' '+(e.note||'')).toLowerCase();
+    if(hay.includes(q)) results.push({type:'event',name:e.n,sub:`${e.dt||''} · ${e.v||''} ${e.val?'· $'+e.val.toLocaleString():''}`,status:'closed'});
+  });
+
+  if(!results.length){
+    box.style.display='block';
+    box.innerHTML='<div style="padding:12px 14px;font-size:10px;color:var(--tx3);font-family:IBM Plex Mono,monospace">No results found</div>';
+    return;
+  }
+
+  box.style.display='block';
+  box.innerHTML=results.slice(0,12).map(r=>`
+    <div onclick="goToResult('${r.pipe||'event'}','${r.id||''}','${r.name}')" style="padding:8px 14px;cursor:pointer;border-bottom:1px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;gap:8px" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'">
+      <div>
+        <div style="font-size:11px;font-weight:600;color:var(--tx)">${r.name}</div>
+        <div style="font-size:9px;color:var(--tx3);margin-top:1px">${r.sub}</div>
+      </div>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;background:var(--bg3);color:var(--tx3);white-space:nowrap">${r.type==='event'?'EVENT':r.pipe.toUpperCase()}</span>
+    </div>`).join('');
+}
+
+function goToResult(pipe,id,name){
+  document.getElementById('master-search').value='';
+  document.getElementById('master-results').style.display='none';
+
+  if(pipe==='event'){
+    // Navigate to booked events, set year to ALL so the event is visible
+    document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('on'));
+    const evSbi=document.querySelector('.sbi[onclick*="events"]');
+    if(evSbi) evSbi.classList.add('on');
+    document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+    document.getElementById('pg-events').classList.add('on');
+    // Switch year to ALL so we find the event regardless of year
+    evYr='all';
+    document.querySelectorAll('#ev-ytog .yb').forEach(b=>b.classList.remove('on'));
+    const allBtn=document.querySelector('#ev-ytog .yb[onclick*="all"]');
+    if(allBtn) allBtn.classList.add('on');
+    buildEvents(name); // pass name as highlight filter
+    document.getElementById('scroll').scrollTop=0;
+    return;
+  }
+
+  // ── CRM lead navigation ──
+  const tabMap={ig:'pg-ig',wix:'pg-wix',corp:'pg-corp'};
+  const sbiSelectors={ig:"nav('ig'",wix:"nav('wix'",corp:"nav('corp'"};
+  document.querySelectorAll('.sbi').forEach(x=>x.classList.remove('on'));
+  const sbi=document.querySelector(`.sbi[onclick*="${sbiSelectors[pipe]||"nav('ig'"}"]`);
+  if(sbi) sbi.classList.add('on');
+  document.querySelectorAll('.pg').forEach(x=>x.classList.remove('on'));
+  const pg=document.getElementById(tabMap[pipe]||'pg-ig');
+  if(pg) pg.classList.add('on');
+
+  // Filter pipeline to show ONLY this lead by name
+  searches[pipe]=name.toLowerCase();
+  filters[pipe]='all'; // reset status filter so lead is visible
+  // Reset filter bar UI
+  document.querySelectorAll(`#fbar-${pipe} .fb`).forEach(b=>b.classList.remove('on'));
+  const allFb=document.querySelector(`#fbar-${pipe} .fb`);
+  if(allFb) allFb.classList.add('on');
+
+  if(pipe==='corp'){
+    activeCorpType='all';
+    document.querySelectorAll('[id^="corp-f-"]').forEach(b=>b.classList.remove('on'));
+    const corpAll=document.getElementById('corp-f-all');
+    if(corpAll) corpAll.classList.add('on');
+    renderCorpType('all');
+  } else {
+    renderPipe(pipe);
+  }
+
+  // Fill the pipeline search box with the name
+  const pipeSearch=document.querySelector(`#pg-${pipe} input[type=text]`);
+  if(pipeSearch){pipeSearch.value=name;}
+
+  document.getElementById('scroll').scrollTop=0;
+
+  // Scroll to and highlight the matched card after render
+  setTimeout(()=>{
+    const cards=document.querySelectorAll(`#${tabMap[pipe]||'pg-ig'} .card`);
+    if(cards.length>0){
+      cards[0].scrollIntoView({behavior:'smooth',block:'center'});
+      cards[0].style.outline='2px solid var(--acc)';
+      cards[0].style.outlineOffset='2px';
+      setTimeout(()=>{cards[0].style.outline='';cards[0].style.outlineOffset='';},2000);
+    }
+  },120);
+}
+
+// Close search on click outside
+document.addEventListener('click',e=>{
+  const box=document.getElementById('master-results');
+  if(box&&!box.contains(e.target)&&e.target.id!=='master-search') box.style.display='none';
+});
+
 function manualSync(){
   const btn=document.getElementById('sync-btn');
   btn.textContent='⟳ SYNCING...';
@@ -798,7 +926,7 @@ function manualSync(){
     D=remote;
     localStorage.setItem('alfred_v5',JSON.stringify(D));
     renderPipe('ig');renderPipe('wix');renderCorpType('all');
-    buildDash();buildTicker();buildEvents();buildDeposits();
+    buildDash();buildTicker();buildEvents();buildRevenue();
     if(document.getElementById('pg-seq').classList.contains('on')) buildSeq();
     btn.textContent='⟳ SYNC';
     showToast('Synced — all devices up to date');
@@ -853,7 +981,7 @@ function nav(pg,el){
   if(pg==='dash')buildDash();
   if(pg==='analytics')buildAnalytics();
   if(pg==='events')buildEvents();
-  if(pg==='deposits')buildDeposits();
+  if(pg==='revenue')buildRevenue();
   if(pg==='seq')buildSeq();
   if(pg==='corp'){renderPipe('corp');renderCorpType('all');}
 }
@@ -874,6 +1002,72 @@ function cOpts(c,extra){
 }
 
 // ─── DASHBOARD ─────────────────────────────────────────────────────────────────
+function buildDynamicAlerts(allLeads, hotLeads){
+  const al=[];
+  const today=new Date();
+  today.setHours(0,0,0,0);
+  const MS_DAY=86400000;
+
+  // Parse event date strings into JS dates
+  function parseEventDate(dtStr){
+    if(!dtStr||dtStr==='TBD') return null;
+    const clean=dtStr.replace(/,?\s*20\d\d/,'').trim();
+    const months={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11};
+    const m=clean.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d+)/);
+    if(m) return new Date(today.getFullYear(),months[m[1]],parseInt(m[2]));
+    return null;
+  }
+
+  // 1. Upcoming events in next 7 days
+  EVENTS.filter(e=>e.yr>=2026).forEach(e=>{
+    const d=parseEventDate(e.dt);
+    if(!d) return;
+    const diff=Math.round((d-today)/MS_DAY);
+    if(diff<0||diff>7) return;
+    const urgency=diff===0?'ar':diff<=3?'ar':'aa';
+    const label=diff===0?'TODAY':diff===1?'TOMORROW':`IN ${diff} DAYS`;
+    al.push({t:urgency,i:'📅',h:`${e.n} — ${label}`,s:`${e.dt} · ${e.v||''} ${e.val?'· $'+e.val.toLocaleString():''}`,sortKey:diff});
+  });
+
+  // 2. Balances due in next 14 days (day-before rule)
+  EVENTS.filter(e=>e.yr>=2026&&e.val&&(e.paid||0)<(e.val||0)).forEach(e=>{
+    const d=parseEventDate(e.dt);
+    if(!d) return;
+    const balDueDate=new Date(d-MS_DAY); // day before event
+    const diff=Math.round((balDueDate-today)/MS_DAY);
+    if(diff<0||diff>14) return;
+    const bal=(e.val||0)-(e.paid||0);
+    al.push({t:'aa',i:'💰',h:`${e.n} — $${bal.toLocaleString()} balance due ${diff===0?'TODAY':diff===1?'TOMORROW':'in '+diff+' days'}`,s:`${e.dt} · collect before event`,sortKey:diff+0.5});
+  });
+
+  // 3. Hot/urgent leads needing follow up
+  if(hotLeads.length){
+    al.push({t:'ar',i:'🔥',h:`${hotLeads.length} HOT lead${hotLeads.length>1?'s':''} — follow up now`,s:hotLeads.slice(0,4).map(x=>x.name).join(', ')+(hotLeads.length>4?'...':''),sortKey:99});
+  }
+
+  // 4. Staffing conflict flag (Jun 21)
+  const jun21=EVENTS.filter(e=>e.yr===2026&&e.mo===6&&(e.dt||'').includes('Jun 21'));
+  if(jun21.length>=2){
+    const d=new Date(2026,5,21);
+    const diff=Math.round((d-today)/MS_DAY);
+    if(diff>=0&&diff<=90){
+      al.push({t:'aa',i:'⚠️',h:`STAFFING CONFLICT — Jun 21 has ${jun21.length} events`,s:jun21.map(e=>e.n).join(' + ')+' · confirm crew assignment',sortKey:diff});
+    }
+  }
+
+  // 5. Pending payment flags
+  const saima=allLeads.find(x=>x.name==='Saima Sarwar');
+  if(saima&&saima.status!=='lost') al.push({t:'ar',i:'⚠',h:'Saima Sarwar — wrong email on file',s:'Find correct contact before outreach',sortKey:100});
+  const fordham=EVENTS.find(e=>e.n&&e.n.includes('Fordham'));
+  if(fordham&&(fordham.paid||0)===0) al.push({t:'ag',i:'🏢',h:'Fordham Holi (Garv Baid) — invoice sent, awaiting payment',s:'600 servings · check in with Garv',sortKey:98});
+  const taseen=EVENTS.find(e=>e.n==='Taseen Islam');
+  if(taseen&&taseen.note) al.push({t:'aa',i:'📋',h:'Taseen Islam — awaiting contract signature',s:'Jun 26 · $1,180 · follow up',sortKey:95});
+
+  // Sort by urgency (ascending sortKey = most urgent first)
+  al.sort((a,b)=>(a.sortKey||99)-(b.sortKey||99));
+  return al.slice(0,8); // max 8 alerts
+}
+
 function buildDash(){
   const all=[...D.ig,...D.wix,...D.corp];
   const active=all.filter(x=>!['closed','lost'].includes(x.status));
@@ -894,13 +1088,8 @@ function buildDash(){
   const whales=all.filter(x=>{const m=x.value.match(/\$?([\d,]+)/);return m&&parseInt(m[1].replace(/,/g,''))>=2000&&x.status!=='lost';}).sort((a,b)=>{const av=parseInt((a.value.match(/\$?([\d,]+)/)||[0,'0'])[1].replace(/,/g,''));const bv=parseInt((b.value.match(/\$?([\d,]+)/)||[0,'0'])[1].replace(/,/g,''));return bv-av;}).slice(0,5);
   document.getElementById('whales').innerHTML=whales.map(w=>`<div class="whale"><div><div class="wn">${w.name}</div><div class="wm">${w.guests} guests · ${w.date}</div></div><div class="wv">${w.value}</div></div>`).join('');
 
-  const al=[];
-  if(all.find(x=>x.name==='Pema'))al.push({t:'ar',i:'⚡',h:'Pema — Mar 28 Queens',s:'Close TODAY or lose the date'});
-  if(hot.length)al.push({t:'ar',i:'🔥',h:`${hot.length} HOT leads — follow up now`,s:hot.slice(0,3).map(x=>x.name).join(', ')+(hot.length>3?'...':'')});
-  if(all.find(x=>x.name==='Saima Sarwar'))al.push({t:'ar',i:'⚠',h:'Saima Sarwar — wrong email on file',s:'Find correct contact before outreach'});
-  al.push({t:'aa',i:'💰',h:'Abhinav Bassi — $1,200 balance due Aug 14',s:'Paying day before event — track this'});
-  al.push({t:'aa',i:'📅',h:'Jun 21 cluster — 2 contracts same day in NJ',s:'Rukhma Umer + Amrit Singh — confirm staffing'});
-  al.push({t:'ag',i:'🏢',h:'Fordham Holi (Garv Baid) — invoice sent, awaiting payment',s:'600 servings · Pani Puri + Bhel + Falooda'});
+  // Dynamic date-driven alerts
+  const al=buildDynamicAlerts(all,hot);
   document.getElementById('alerts').innerHTML=al.map(a=>`<div class="aler ${a.t}"><div class="ai">${a.i}</div><div><div class="ah">${a.h}</div><div class="as">${a.s}</div></div></div>`).join('');
 
   const c=CC();
@@ -974,8 +1163,14 @@ function buildAnalytics(){
 
 // ─── BOOKED EVENTS ─────────────────────────────────────────────────────────────
 function setEvYr(yr,el){evYr=yr;document.querySelectorAll('#ev-ytog .yb').forEach(b=>b.classList.remove('on'));el.classList.add('on');buildEvents();}
-function buildEvents(){
-  const f=evYr==='all'?EVENTS:EVENTS.filter(e=>e.yr===parseInt(evYr));
+function buildEvents(highlightName){
+  let f=evYr==='all'?EVENTS:EVENTS.filter(e=>e.yr===parseInt(evYr));
+  // If called from search, filter to matching events only
+  if(highlightName){
+    const q=highlightName.toLowerCase();
+    const matched=f.filter(e=>(e.n||'').toLowerCase().includes(q)||(e.v||'').toLowerCase().includes(q));
+    if(matched.length>0) f=matched;
+  }
   const sorted=[...f].sort((a,b)=>a.mo-b.mo);
   document.getElementById('ev-cards').innerHTML=sorted.map(e=>{
     const cls=e.yr===2027?'ec-bl':e.yr===2025?'ec-am':e.val?'':'ec-no';
@@ -1024,8 +1219,8 @@ function autoDeposit(card, prevStatus){
   }
   save();
   // Refresh deposit view if open
-  if(document.getElementById('pg-deposits').classList.contains('on')) buildDeposits();
-  showToast(card.name+' added to deposit tracker');
+  if(document.getElementById('pg-revenue').classList.contains('on')) buildRevenue();
+  showToast(card.name+' added to revenue tracker');
 }
 
 function editPaid(key, currentPaid){
@@ -1037,7 +1232,7 @@ function editPaid(key, currentPaid){
   const crmIdx=D.closedDeposits.findIndex(d=>d.id===key||d.n===key);
   if(crmIdx>-1){
     D.closedDeposits[crmIdx].paid=num;
-    save();buildDeposits();
+    save();buildRevenue();
     showToast('Payment updated');
     return;
   }
@@ -1045,36 +1240,61 @@ function editPaid(key, currentPaid){
   const ev=EVENTS.find(e=>(e.id||e.n)===key);
   if(ev){
     D.closedDeposits.push({...ev,id:key,paid:num,fromCRM:true});
-    save();buildDeposits();
+    save();buildRevenue();
     showToast('Payment updated');
   }
 }
 
-function buildDeposits(){
-  // Merge static EVENTS with dynamic CRM closures
-  // Use id to deduplicate — CRM entry wins if both exist
+function buildRevenue(){
+  // Merge static EVENTS with CRM closures
   const staticEv=EVENTS.filter(e=>e.yr>=2026&&e.val);
   const crmEv=D.closedDeposits||[];
-  // Build merged map: static first, then overwrite/add CRM entries
   const depMap=new Map();
-  staticEv.forEach(e=>depMap.set(e.id||e.n, e));
-  crmEv.forEach(e=>depMap.set(e.id, {...e, fromCRM:true}));
+  staticEv.forEach(e=>depMap.set(e.n, e));
+  crmEv.forEach(e=>depMap.set(e.id,{...e,n:e.n||e.name,fromCRM:true}));
   const ev2026=Array.from(depMap.values()).filter(e=>e.val);
+
   let totalVal=0,totalPaid=0,totalBal=0;
-  const noVal=EVENTS.filter(e=>e.yr>=2026&&!e.val).length + crmEv.filter(e=>!e.val).length;
+  const noVal=EVENTS.filter(e=>e.yr>=2026&&!e.val).length;
   ev2026.forEach(e=>{
     const bal=(e.val||0)-(e.paid||0);
     totalVal+=e.val||0;totalPaid+=e.paid||0;totalBal+=bal;
   });
+
+  // KPIs
   document.getElementById('dep-total-v').textContent='$'+totalVal.toLocaleString();
   document.getElementById('dep-paid-v').textContent='$'+totalPaid.toLocaleString();
   document.getElementById('dep-bal-v').textContent='$'+totalBal.toLocaleString();
   document.getElementById('dep-unknown-v').textContent=noVal;
   document.getElementById('sm-dep-bal').textContent='$'+totalBal.toLocaleString();
 
-  // Sort by event date
+  // Revenue by month chart — merge static + CRM
+  const monthlyRev=new Array(12).fill(0);
+  ev2026.forEach(e=>{
+    const mo=(e.mo||1)-1;
+    if(mo>=0&&mo<12) monthlyRev[mo]+=(e.val||0);
+  });
+  const cc=CC();
+  const revCtx=document.getElementById('rev-tracker-c');
+  if(revCtx){
+    if(window._revTrackerChart){window._revTrackerChart.destroy();}
+    window._revTrackerChart=new Chart(revCtx.getContext('2d'),{
+      type:'bar',
+      data:{labels:MOS,datasets:[
+        {label:'Contracted',data:monthlyRev,backgroundColor:cc.acc+'66',borderColor:cc.acc,borderWidth:1,borderRadius:2},
+        {label:'Collected',data:MOS.map((_,i)=>{
+          let sum=0;ev2026.filter(e=>(e.mo||1)-1===i).forEach(e=>sum+=(e.paid||0));return sum;
+        }),backgroundColor:cc.bl+'66',borderColor:cc.bl,borderWidth:1,borderRadius:2}
+      ]},
+      options:{responsive:true,animation:{duration:500},plugins:{legend:{labels:{color:cc.tx,font:{size:9,family:'IBM Plex Mono'},boxWidth:10}}},
+        scales:{x:{ticks:{color:cc.tx,font:{size:9,family:'IBM Plex Mono'}},grid:{color:cc.grid}},
+                y:{ticks:{color:cc.tx,font:{size:9,family:'IBM Plex Mono'},callback:v=>'$'+v.toLocaleString()},grid:{color:cc.grid}}}}
+    });
+  }
+
+  // Sort by month then date
   const sorted=[...ev2026].sort((a,b)=>(a.mo||12)-(b.mo||12));
-  document.getElementById('dep-rows').innerHTML=sorted.map((e,idx)=>{
+  document.getElementById('dep-rows').innerHTML=sorted.map(e=>{
     const bal=(e.val||0)-(e.paid||0);
     const pct=e.val?Math.round((e.paid||0)/e.val*100):0;
     let statusLabel,statusClass;
@@ -1087,13 +1307,13 @@ function buildDeposits(){
     return `<div class="dep-row" style="${isCRM?'border-left:2px solid var(--acc)':''}">
       <div>
         <div class="dep-name">${e.n}${isCRM?'<span style="font-family:IBM Plex Mono,monospace;font-size:7px;color:var(--acc2);margin-left:5px;padding:1px 4px;background:var(--accdim);border-radius:2px">CRM</span>':''}</div>
-        ${e.note?`<div style="font-size:9px;color:var(--am)">${e.note}</div>`:''}
+        ${e.note?`<div style="font-size:9px;color:var(--am);margin-top:1px">${e.note}</div>`:''}
       </div>
       <div class="dep-date">${e.dt||'TBD'}</div>
       <div class="dep-total">$${(e.val||0).toLocaleString()}</div>
-      <div class="dep-paid" style="cursor:pointer" onclick="editPaid('${rowKey}',${e.paid||0})" title="Click to update amount paid">
+      <div class="dep-paid" style="cursor:pointer" onclick="editPaid('${rowKey}',${e.paid||0})" title="Click to update">
         $${(e.paid||0).toLocaleString()} <span style="font-size:8px;color:var(--tx3)">(${pct}%)</span>
-        <span style="font-size:8px;color:var(--acc3);margin-left:3px">✎</span>
+        <span style="font-size:8px;color:var(--acc3);margin-left:2px">✎</span>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
         <div class="dep-bal ${balCol}">${bal===0?'✓':'$'+bal.toLocaleString()}</div>
@@ -1101,10 +1321,10 @@ function buildDeposits(){
       </div>
     </div>`;
   }).join('');
-  document.getElementById('nb-dep').textContent=sorted.length;
+  document.getElementById('nb-rev').textContent=sorted.length;
 }
 
-// ─── RE-ENGAGEMENT SEQUENCER ────────────────────────────────────────────────────
+
 function buildSeq(){
   const all=[...D.ig,...D.wix,...D.corp];
   const reLeads=all.filter(x=>!['closed','lost'].includes(x.status));
@@ -1439,7 +1659,7 @@ function doExport(){const b=new Blob([JSON.stringify(D,null,2)],{type:'applicati
 function doImport(){const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{D=JSON.parse(ev.target.result);save();renderPipe('ig');renderPipe('wix');buildDash();buildTicker();showToast('Import successful');}catch{alert('Invalid JSON');}};r.readAsText(f);};i.click();}
 
 // ─── INIT ──────────────────────────────────────────────────────────────────────
-loadTheme();load();renderPipe('ig');renderPipe('wix');renderCorpType('all');buildDash();buildTicker();buildEvents();buildDeposits();
+loadTheme();load();renderPipe('ig');renderPipe('wix');renderCorpType('all');buildDash();buildTicker();buildEvents();buildRevenue();
 </script>
 </body>
 </html>
